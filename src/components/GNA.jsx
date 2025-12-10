@@ -262,7 +262,14 @@ setRate(json.rate ?? 0);
 </div>
 
 
-      {loading && <div className="table">Loading...</div>}
+      {loading && <div className="table">
+        <div className="flex items-center justify-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <span className="ml-2 mt-4">
+                          Loading...
+                        </span>
+                      </div>
+                      </div>}
       {error && <div className="table text-red-600">Error: {error}</div>}
 
       {/* COST TABLE */}

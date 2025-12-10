@@ -95,6 +95,8 @@ const Rates = () => {
     fetchData(year);
   }, [year]);
 
+
+
   const renderTable = (rows, title) => (
     <div className="border-line p-3 mb-6">
       <h3 className="text-sm font-semibold mb-2">{title}</h3>
@@ -143,6 +145,7 @@ const Rates = () => {
     </div>
   );
 
+
   return (
     <div className="w-full border-line p-3">
       {/* Fiscal year selector */}
@@ -166,7 +169,14 @@ const Rates = () => {
         </select>
       </div>
 
-      {loading && <div className="table">Loading...</div>}
+      {loading && <div className="table">
+        <div className="flex items-center justify-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <span className="ml-2 mt-4">
+                          Loading...
+                        </span>
+                      </div>
+                      </div>}
       {error && (
         <div className="table text-red-600">Error: {error}</div>
       )}
