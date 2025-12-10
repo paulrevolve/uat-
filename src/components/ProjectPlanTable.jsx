@@ -1782,13 +1782,13 @@ const ProjectPlanTable = ({
             <table className="min-w-full table-auto divide-y divide-gray-200">
               <thead className="bg-gray-200 sticky top-0">
                 <tr>
-                  <th className="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="px-4 py-2 text-center text-xs font-bold text-gray-600 capitalize tracking-wider">
                     Export
                   </th>
                   {columns.map((col) => (
                     <th
                       key={col}
-                      className="px-4 py-2 text-xs font-bold text-gray-600 uppercase tracking-widern whitespace-nowrap text-center"
+                      className="px-4 py-2 text-xs font-bold text-gray-600 capitalize tracking-widern whitespace-nowrap text-center"
                     >
                       {COLUMN_LABELS[col] || col}
                     </th>

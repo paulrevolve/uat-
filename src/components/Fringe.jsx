@@ -11,7 +11,7 @@
 // //       try { 
 // //         setLoading(true);
 // //         // Replace with your actual API endpoint
-// //         const response = await fetch(`${backendUrl}/Orgnization/GetFringe`);
+// //         const response = await fetch(`${backendUrl}/Orgnization/GetHR`);
 // //         if (!response.ok) throw new Error('Failed to fetch data');
 // //         const result = await response.json();
 // //         setData(result);
@@ -201,7 +201,7 @@
 
 //       const response = await fetch(
         
-//         `${backendUrl}/Orgnization/GetFringe?fycd=${selectedYear}`
+//         `${backendUrl}/Orgnization/GetHR?fycd=${selectedYear}`
 //       );
 //       if (!response.ok) throw new Error("Failed to fetch data");
 
@@ -225,7 +225,7 @@
 // //     setError(null);
 
 // //     const yearParam = `"${String(selectedYear)}"`; // → "\"2025\""
-// //     const url = `${backendUrl}/Orgnization/GetFringe?year=${encodeURIComponent(yearParam)}`;
+// //     const url = `${backendUrl}/Orgnization/GetHR?year=${encodeURIComponent(yearParam)}`;
 
 // //     const response = await fetch(url);
 // //     if (!response.ok) throw new Error("Failed to fetch data");
@@ -651,7 +651,7 @@ const calcBaseTotals = (rows) => {
         setError(null);
 
         const res = await fetch(
-            `${backendUrl}/Orgnization/GetFringe?fycd=${selectedYear}`
+            `${backendUrl}/Orgnization/GetHR?fycd=${selectedYear}&type=FRINGE`
         );
         if (!res.ok) throw new Error("Failed to fetch data");
 
