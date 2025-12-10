@@ -215,276 +215,315 @@ setRate(json.rate ?? 0);
       ? ""
       : n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  return (
-    <div className="w-full border-line p-3">
-      {/* Top bar */}
-      <div className="flex items-center justify-between mb-3 gap-4">
-  {/* Escalation + rate (same styling) */}
-  <div className="flex items-center gap-2">
-    <label className="text-sm font-medium text-gray-700">
-      Rate:
-    </label>
-    <input
-      type="text"
-      className="border border-gray-300 rounded px-2 py-1 text-sm w-32"
-      value={
-           `${formatNumber(rate)}`
-      }
-      readOnly
-    />
-  </div>
+   return (
+     <div className="w-full border-line p-3">
+       {/* Top bar */}
+       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-gray-50 p-4 rounded-lg">
+   {/* Escalation + rate (same styling) */}
+   <div className="flex items-center gap-2">
+     <label className="text-sm font-medium text-gray-700">
+       Rate:
+     </label>
+     <input
+       type="text"
+       className="border border-gray-300 rounded px-2 py-1 text-sm w-20"
+       value={
+    rate === null || rate === undefined || rate === ""
+      ? ""
+      : `${formatNumber(rate)}%`
+  }
 
-  {/* Closing period + Year selector keep same as before */}
-  <div className="text-sm text-gray-700">
-    Closing period:&nbsp;
-    <span className="font-semibold">
-      {closePeriodLabel || "—"}
-    </span>
-  </div>
+       readOnly
+     />
+   </div>
+ 
+   {/* Closing period + Year selector keep same as before */}
+   <div className="text-sm text-gray-700">
+     Closing period:&nbsp;
+     <span className="font-semibold">
+       {closePeriodLabel || "—"}
+     </span>
+   </div>
+ 
+   <div className="flex items-center gap-2">
+     <label className="text-sm font-medium text-gray-700">Year:</label>
+     <select
+       className="border border-gray-300 rounded px-2 py-1 text-sm"
+       value={selectedYear}
+       onChange={(e) => setSelectedYear(e.target.value)}
+     >
+       {Array.from({ length: 5 }).map((_, i) => {
+         const y = new Date().getFullYear() - 2 + i;
+         return (
+           <option key={y} value={y}>
+             {y}
+           </option>
+         );
+       })}
+     </select>
+   </div>
+ </div>
+ 
+ 
+       {loading && <div className="table">
+         <div className="flex items-center justify-center py-4">
+                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                         <span className="ml-2 mt-4">
+                           Loading...
+                         </span>
+                       </div>
+                       </div>}
+       {error && <div className="table text-red-600">Error: {error}</div>}
+ 
+       {/* COST TABLE */}
+       {!loading && !error && (
+         <>
+          <h3 className="text-sm font-semibold mt-2">Cost Account</h3>
+         <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
+           <table className="table w-full">
+             <thead className="thead bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-20 border-b-2 border-gray-200">
+               <tr>
+                 <th className=" th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+                   Account Id
+                 </th>
+                 <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+                   Org Id
+                 </th>
+                 <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+                   YTD Actual Amt
+                 </th>
+                 <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+                   YTD Budget Amt
+                 </th>
+                 {monthsHeader.map((m) => (
+                   <th
+                     key={m}
+                     className="th-thead border border-gray-200 font-semibold text-gray-900"
+                     colSpan={1}
+                   >
+                     {m}
+                   </th>
+                 ))}
+               </tr>
+               
+                 <tr>
+   {monthsHeader.map((_, i) => {
+     const period = i + 1;
+     const closed = isPeriodClosed(period, selectedYear);
+     return (
+       <th
+         key={period}
+         // className="th-thead border border-gray-200 font-semibold text-gray-900"
+          className={
+                         "th-thead border border-gray-200 font-semibold text-gray-900 py-2 px-2 text-center " +
+                         (closed
+                           ? "bg-gradient-to-r from-green-100 to-green-200"
+                           : "bg-gradient-to-r from-orange-100 to-orange-200")
+                       }
+       >
+         {closed ? "Actual Amt" : "Budget Amt"}
+       </th>
+     );
+   })}
+ </tr>
+             </thead>
+             <tbody className="tbody divide-y divide-gray-100">
+               {costData.map((item, idx) => (
+                 <tr key={idx}
+                 >
+                   <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+                     {item.acctId}
+                   </td>
+                   <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+                     {item.orgId}
+                   </td>
+                   <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+                     {formatNumber(item.ytdActual)}
+                   </td>
+                   <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+                     {formatNumber(item.ytdBudget)}
+                   </td>
+ 
+                   {item.months.map((m, i) => {
+   const period = i + 1;
+   const closed = isPeriodClosed(period, selectedYear);
+ 
+   return (
+     <React.Fragment key={period}>
+       <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+         {formatNumber(closed ? m.actual : m.budget)}
+       </td>
+     </React.Fragment>
+   );
+ })}
+ 
+                 </tr>
+               ))}
+             </tbody>
+ <tfoot>
+   <tr className="sticky-tfoot">
+     <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm" colSpan={2}>
+       Totals :
+     </td>
+     <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+       {formatNumber(costTotals.totalYTDCostActualAmt)}
+     </td>
+      <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+       {formatNumber(costTotals.totalYTDCostBudgetAmt)}
+     </td>
+      
+     {monthsHeader.map((_, i) => (
+       <td key={i} className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+         {formatNumber(costTotals.monthTotals[i] ?? 0)}
+       </td>
+     ))}
+   </tr>
+ </tfoot>
+ 
+ 
+           </table>
+         </div>
+       {/* )} */}
+ 
+       {/* BASE TABLE */}
+       <h3 className="text-sm font-semibold mt-2">Base Account</h3>
+       <div className="mt-1 overflow-x-auto max-h-[40vh] overflow-y-auto">
+   <table className="table w-full">
+     <thead className="thead">
+       <tr>
+         <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+           Account Id
+         </th>
+         <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+           Org Id
+         </th>
+         <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+           YTD Base Amt
+         </th>
+         <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+           YTD Allocation Amt
+         </th>
+         <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+           YTD Budget Amt
+         </th>
+         {monthsHeader.map((m) => (
+           <th
+             key={m}
+             className="th-thead border border-gray-200 font-semibold text-gray-900"
+             
+             colSpan={2}
+           >
+             {m}
+           </th>
+         ))}
+       </tr>
+       {/* <tr 
+       >
+         {monthsHeader.map((_, i) => (
+           <React.Fragment key={i}>
+             <th className="th-thead border border-gray-200 font-semibold text-gray-900">Base</th>
+             <th className="th-thead border border-gray-200 font-semibold text-gray-900">
+               Allocation
+             </th>
+           </React.Fragment>
+         ))}
+       </tr> */}
+       <tr>
+   {monthsHeader.map((_, i) => (
+     <React.Fragment key={i}>
+       {/* Base = green */}
+       <th
+         className={
+           "th-thead border border-gray-200 font-semibold text-gray-900 py-2 px-2 text-center " +
+           "bg-gradient-to-r from-green-100 to-green-200"
+         }
+       >
+         Base Amt
+       </th>
+ 
+       {/* Allocation = orange */}
+       <th
+         className={
+           "th-thead border border-gray-200 font-semibold text-gray-900 py-2 px-2 text-center " +
+           "bg-gradient-to-r from-orange-100 to-orange-200"
+         }
+       >
+         Allocation Amt
+       </th>
+     </React.Fragment>
+   ))}
+ </tr>
+ 
+     </thead>
+ 
+     <tbody className="tbody">
+       {baseData.map((item, idx) => (
+         <tr key={idx}>
+           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+             {item.acctId}
+           </td>
+           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+             {item.orgId}
+           </td>
+           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+           {formatNumber(item.ytdBase)}
+           </td>
+           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+             {formatNumber(item.ytdAllocation)}
+           </td>
+           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+             {formatNumber(item.ytdBudget)}
+           </td>
+ 
+           {item.months.map((m, i) => (
+             <React.Fragment key={i}>
+               <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+                 {formatNumber(m.base)}
+               </td>
+               <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+                 {formatNumber(m.allocation)}
+               </td>
+             </React.Fragment>
+           ))}
+         </tr>
+       ))}
+     </tbody>
+ 
+    <tfoot>
+   <tr className="sticky-tfoot">
+     <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm" colSpan={2}>
+       Totals:
+     </td>
+     <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+       {formatNumber(baseTotals.ytdBaseTotal)}
+     </td>
+     <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+       {formatNumber(baseTotals.ytdAllocTotal)}
+     </td>
+     <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+       {formatNumber(baseTotals.ytdBudgetTotal)}
+     </td>
+     {monthsHeader.map((_, i) => (
+       <React.Fragment key={i}>
+         <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+           {formatNumber(baseTotals.monthBaseTotals[i] ?? 0)}
+         </td>
+         <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+           {formatNumber(baseTotals.monthAllocTotals[i] ?? 0)}
+         </td>
+       </React.Fragment>
+     ))}
+   </tr>
+ </tfoot>
+ 
+ 
+   </table>
+ </div>
+ </>
+   )}
+     </div>
+   );
 
-  <div className="flex items-center gap-2">
-    <label className="text-sm font-medium text-gray-700">Year:</label>
-    <select
-      className="border border-gray-300 rounded px-2 py-1 text-sm"
-      value={selectedYear}
-      onChange={(e) => setSelectedYear(e.target.value)}
-    >
-      {Array.from({ length: 5 }).map((_, i) => {
-        const y = new Date().getFullYear() - 2 + i;
-        return (
-          <option key={y} value={y}>
-            {y}
-          </option>
-        );
-      })}
-    </select>
-  </div>
-</div>
-
-
-      {loading && <div className="table">
-        <div className="flex items-center justify-center py-4">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <span className="ml-2 mt-4">
-                          Loading...
-                        </span>
-                      </div>
-                      </div>}
-      {error && <div className="table text-red-600">Error: {error}</div>}
-
-      {/* COST TABLE */}
-    {!loading && !error && (
-        <>
-         <h3 className="text-sm font-semibold mt-2">Cost Account</h3>
-        <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
-          <table className="table w-full">
-            <thead className="thead">
-              <tr>
-                <th className="th-thead border border-black" rowSpan={2}>
-                  Account Id
-                </th>
-                <th className="th-thead border border-black" rowSpan={2}>
-                  Org Id
-                </th>
-                <th className="th-thead border border-black" rowSpan={2}>
-                  YTD Actual
-                </th>
-                <th className="th-thead border border-black" rowSpan={2}>
-                  YTD Budget
-                </th>
-                {monthsHeader.map((m) => (
-                  <th
-                    key={m}
-                    className="th-thead border border-black"
-                    colSpan={1}
-                  >
-                    {m}
-                  </th>
-                ))}
-              </tr>
-              
-                <tr>
-  {monthsHeader.map((_, i) => {
-    const period = i + 1;
-    const closed = isPeriodClosed(period, selectedYear);
-    return (
-      <th
-        key={period}
-        className="th-thead border border-black"
-      >
-        {closed ? "Actual" : "Budget"}
-      </th>
-    );
-  })}
-</tr>
-            </thead>
-            <tbody className="tbody">
-              {costData.map((item, idx) => (
-                <tr key={idx}>
-                  <td className="tbody-td border border-black whitespace-nowrap">
-                    {item.acctId}
-                  </td>
-                  <td className="tbody-td border border-black whitespace-nowrap">
-                    {item.orgId}
-                  </td>
-                  <td className="tbody-td border border-black">
-                    {formatNumber(item.ytdActual)}
-                  </td>
-                  <td className="tbody-td border border-black">
-                    {formatNumber(item.ytdBudget)}
-                  </td>
-
-                  {item.months.map((m, i) => {
-  const period = i + 1;
-  const closed = isPeriodClosed(period, selectedYear);
-
-  return (
-    <React.Fragment key={period}>
-      <td className="tbody-td border border-black">
-        {formatNumber(closed ? m.actual : m.budget)}
-      </td>
-    </React.Fragment>
-  );
-})}
-
-                </tr>
-              ))}
-            </tbody>
-<tfoot>
-  <tr className="sticky-tfoot">
-    <td className="tbody-td border border-black font-semibold" colSpan={2}>
-      Totals :
-    </td>
-    <td className="tbody-td border border-black font-semibold">
-      {formatNumber(costTotals.totalYTDCostActualAmt)}
-    </td>
-     <td className="tbody-td border border-black font-semibold">
-      {formatNumber(costTotals.totalYTDCostBudgetAmt)}
-    </td>
-     
-    {monthsHeader.map((_, i) => (
-      <td key={i} className="tbody-td border border-black font-semibold">
-        {formatNumber(costTotals.monthTotals[i] ?? 0)}
-      </td>
-    ))}
-  </tr>
-</tfoot>
-
-
-          </table>
-        </div>
-      {/* )} */}
-
-      {/* BASE TABLE */}
-      <h3 className="text-sm font-semibold mt-2">Base Account</h3>
-      <div className="mt-1 overflow-x-auto max-h-[40vh] overflow-y-auto">
-  <table className="table w-full">
-    <thead className="thead">
-      <tr>
-        <th className="th-thead border border-black" rowSpan={2}>
-          Account Id
-        </th>
-        <th className="th-thead border border-black" rowSpan={2}>
-          Org Id
-        </th>
-        <th className="th-thead border border-black" rowSpan={2}>
-          YTD Base
-        </th>
-        <th className="th-thead border border-black" rowSpan={2}>
-          YTD Allocation
-        </th>
-        <th className="th-thead border border-black" rowSpan={2}>
-          YTD Budget
-        </th>
-        {monthsHeader.map((m) => (
-          <th
-            key={m}
-            className="th-thead border border-black"
-            colSpan={2}
-          >
-            {m}
-          </th>
-        ))}
-      </tr>
-      <tr>
-        {monthsHeader.map((_, i) => (
-          <React.Fragment key={i}>
-            <th className="th-thead border border-black">Base</th>
-            <th className="th-thead border border-black">
-              Allocation
-            </th>
-          </React.Fragment>
-        ))}
-      </tr>
-    </thead>
-
-    <tbody className="tbody">
-      {baseData.map((item, idx) => (
-        <tr key={idx}>
-          <td className="tbody-td border border-black whitespace-nowrap">
-            {item.acctId}
-          </td>
-          <td className="tbody-td border border-black">
-            {item.orgId}
-          </td>
-          <td className="tbody-td border border-black">
-          {formatNumber(item.ytdBase)}
-          </td>
-          <td className="tbody-td border border-black">
-            {formatNumber(item.ytdAllocation)}
-          </td>
-          <td className="tbody-td border border-black">
-            {formatNumber(item.ytdBudget)}
-          </td>
-
-          {item.months.map((m, i) => (
-            <React.Fragment key={i}>
-              <td className="tbody-td border border-black">
-                {formatNumber(m.base)}
-              </td>
-              <td className="tbody-td border border-black">
-                {formatNumber(m.allocation)}
-              </td>
-            </React.Fragment>
-          ))}
-        </tr>
-      ))}
-    </tbody>
-
-   <tfoot>
-  <tr className="sticky-tfoot">
-    <td className="tbody-td border border-black font-semibold" colSpan={2}>
-      Totals:
-    </td>
-    <td className="tbody-td border border-black font-semibold">
-      {formatNumber(baseTotals.ytdBaseTotal)}
-    </td>
-    <td className="tbody-td border border-black font-semibold">
-      {formatNumber(baseTotals.ytdAllocTotal)}
-    </td>
-    <td className="tbody-td border border-black font-semibold">
-      {formatNumber(baseTotals.ytdBudgetTotal)}
-    </td>
-    {monthsHeader.map((_, i) => (
-      <React.Fragment key={i}>
-        <td className="tbody-td border border-black font-semibold">
-          {formatNumber(baseTotals.monthBaseTotals[i] ?? 0)}
-        </td>
-        <td className="tbody-td border border-black font-semibold">
-          {formatNumber(baseTotals.monthAllocTotals[i] ?? 0)}
-        </td>
-      </React.Fragment>
-    ))}
-  </tr>
-</tfoot>
-
-
-  </table>
-</div>
-</>
-  )}
-    </div>
-  );
 };
 
 export default GNA;

@@ -218,7 +218,7 @@ setRate(json.rate ?? 0);
   return (
     <div className="w-full border-line p-3">
       {/* Top bar */}
-      <div className="flex items-center justify-between mb-3 gap-4">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-gray-50 p-4 rounded-lg">
   {/* Escalation + rate (same styling) */}
   <div className="flex items-center gap-2">
     <label className="text-sm font-medium text-gray-700">
@@ -226,10 +226,12 @@ setRate(json.rate ?? 0);
     </label>
     <input
       type="text"
-      className="border border-gray-300 rounded px-2 py-1 text-sm w-32"
-      value={
-           `${formatNumber(rate)}`
-      }
+      className="border border-gray-300 rounded px-2 py-1 text-sm w-20"
+        value={
+    rate === null || rate === undefined || rate === ""
+      ? ""
+      : `${formatNumber(rate)}%`
+  }
       readOnly
     />
   </div>
@@ -273,29 +275,29 @@ setRate(json.rate ?? 0);
       {error && <div className="table text-red-600">Error: {error}</div>}
 
       {/* COST TABLE */}
-    {!loading && !error && (
+      {!loading && !error && (
         <>
          <h3 className="text-sm font-semibold mt-2">Cost Account</h3>
         <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
           <table className="table w-full">
-            <thead className="thead">
+            <thead className="thead bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-20 border-b-2 border-gray-200">
               <tr>
-                <th className="th-thead border border-black" rowSpan={2}>
+                <th className=" th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
                   Account Id
                 </th>
-                <th className="th-thead border border-black" rowSpan={2}>
+                <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
                   Org Id
                 </th>
-                <th className="th-thead border border-black" rowSpan={2}>
-                  YTD Actual
+                <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+                  YTD Actual Amt
                 </th>
-                <th className="th-thead border border-black" rowSpan={2}>
-                  YTD Budget
+                <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+                  YTD Budget Amt
                 </th>
                 {monthsHeader.map((m) => (
                   <th
                     key={m}
-                    className="th-thead border border-black"
+                    className="th-thead border border-gray-200 font-semibold text-gray-900"
                     colSpan={1}
                   >
                     {m}
@@ -310,27 +312,34 @@ setRate(json.rate ?? 0);
     return (
       <th
         key={period}
-        className="th-thead border border-black"
+        // className="th-thead border border-gray-200 font-semibold text-gray-900"
+         className={
+                        "th-thead border border-gray-200 font-semibold text-gray-900 py-2 px-2 text-center " +
+                        (closed
+                          ? "bg-gradient-to-r from-green-100 to-green-200"
+                          : "bg-gradient-to-r from-orange-100 to-orange-200")
+                      }
       >
-        {closed ? "Actual" : "Budget"}
+        {closed ? "Actual Amt" : "Budget Amt"}
       </th>
     );
   })}
 </tr>
             </thead>
-            <tbody className="tbody">
+            <tbody className="tbody divide-y divide-gray-100">
               {costData.map((item, idx) => (
-                <tr key={idx}>
-                  <td className="tbody-td border border-black whitespace-nowrap">
+                <tr key={idx}
+                >
+                  <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
                     {item.acctId}
                   </td>
-                  <td className="tbody-td border border-black whitespace-nowrap">
+                  <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
                     {item.orgId}
                   </td>
-                  <td className="tbody-td border border-black">
+                  <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
                     {formatNumber(item.ytdActual)}
                   </td>
-                  <td className="tbody-td border border-black">
+                  <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
                     {formatNumber(item.ytdBudget)}
                   </td>
 
@@ -340,7 +349,7 @@ setRate(json.rate ?? 0);
 
   return (
     <React.Fragment key={period}>
-      <td className="tbody-td border border-black">
+      <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
         {formatNumber(closed ? m.actual : m.budget)}
       </td>
     </React.Fragment>
@@ -352,18 +361,18 @@ setRate(json.rate ?? 0);
             </tbody>
 <tfoot>
   <tr className="sticky-tfoot">
-    <td className="tbody-td border border-black font-semibold" colSpan={2}>
+    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm" colSpan={2}>
       Totals :
     </td>
-    <td className="tbody-td border border-black font-semibold">
+    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
       {formatNumber(costTotals.totalYTDCostActualAmt)}
     </td>
-     <td className="tbody-td border border-black font-semibold">
+     <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
       {formatNumber(costTotals.totalYTDCostBudgetAmt)}
     </td>
      
     {monthsHeader.map((_, i) => (
-      <td key={i} className="tbody-td border border-black font-semibold">
+      <td key={i} className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
         {formatNumber(costTotals.monthTotals[i] ?? 0)}
       </td>
     ))}
@@ -381,68 +390,96 @@ setRate(json.rate ?? 0);
   <table className="table w-full">
     <thead className="thead">
       <tr>
-        <th className="th-thead border border-black" rowSpan={2}>
+        <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
           Account Id
         </th>
-        <th className="th-thead border border-black" rowSpan={2}>
+        <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
           Org Id
         </th>
-        <th className="th-thead border border-black" rowSpan={2}>
-          YTD Base
+        <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+          YTD Base Amt
         </th>
-        <th className="th-thead border border-black" rowSpan={2}>
-          YTD Allocation
+        <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+          YTD Allocation Amt
         </th>
-        <th className="th-thead border border-black" rowSpan={2}>
-          YTD Budget
+        <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+          YTD Budget Amt
         </th>
         {monthsHeader.map((m) => (
           <th
             key={m}
-            className="th-thead border border-black"
+            className="th-thead border border-gray-200 font-semibold text-gray-900"
+            
             colSpan={2}
           >
             {m}
           </th>
         ))}
       </tr>
-      <tr>
+      {/* <tr 
+      >
         {monthsHeader.map((_, i) => (
           <React.Fragment key={i}>
-            <th className="th-thead border border-black">Base</th>
-            <th className="th-thead border border-black">
+            <th className="th-thead border border-gray-200 font-semibold text-gray-900">Base</th>
+            <th className="th-thead border border-gray-200 font-semibold text-gray-900">
               Allocation
             </th>
           </React.Fragment>
         ))}
-      </tr>
+      </tr> */}
+      <tr>
+  {monthsHeader.map((_, i) => (
+    <React.Fragment key={i}>
+      {/* Base = green */}
+      <th
+        className={
+          "th-thead border border-gray-200 font-semibold text-gray-900 py-2 px-2 text-center " +
+          "bg-gradient-to-r from-green-100 to-green-200"
+        }
+      >
+        Base Amt
+      </th>
+
+      {/* Allocation = orange */}
+      <th
+        className={
+          "th-thead border border-gray-200 font-semibold text-gray-900 py-2 px-2 text-center " +
+          "bg-gradient-to-r from-orange-100 to-orange-200"
+        }
+      >
+        Allocation Amt
+      </th>
+    </React.Fragment>
+  ))}
+</tr>
+
     </thead>
 
     <tbody className="tbody">
       {baseData.map((item, idx) => (
         <tr key={idx}>
-          <td className="tbody-td border border-black whitespace-nowrap">
+          <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
             {item.acctId}
           </td>
-          <td className="tbody-td border border-black">
+          <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
             {item.orgId}
           </td>
-          <td className="tbody-td border border-black">
+          <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
           {formatNumber(item.ytdBase)}
           </td>
-          <td className="tbody-td border border-black">
+          <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
             {formatNumber(item.ytdAllocation)}
           </td>
-          <td className="tbody-td border border-black">
+          <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
             {formatNumber(item.ytdBudget)}
           </td>
 
           {item.months.map((m, i) => (
             <React.Fragment key={i}>
-              <td className="tbody-td border border-black">
+              <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
                 {formatNumber(m.base)}
               </td>
-              <td className="tbody-td border border-black">
+              <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
                 {formatNumber(m.allocation)}
               </td>
             </React.Fragment>
@@ -453,24 +490,24 @@ setRate(json.rate ?? 0);
 
    <tfoot>
   <tr className="sticky-tfoot">
-    <td className="tbody-td border border-black font-semibold" colSpan={2}>
+    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm" colSpan={2}>
       Totals:
     </td>
-    <td className="tbody-td border border-black font-semibold">
+    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
       {formatNumber(baseTotals.ytdBaseTotal)}
     </td>
-    <td className="tbody-td border border-black font-semibold">
+    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
       {formatNumber(baseTotals.ytdAllocTotal)}
     </td>
-    <td className="tbody-td border border-black font-semibold">
+    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
       {formatNumber(baseTotals.ytdBudgetTotal)}
     </td>
     {monthsHeader.map((_, i) => (
       <React.Fragment key={i}>
-        <td className="tbody-td border border-black font-semibold">
+        <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
           {formatNumber(baseTotals.monthBaseTotals[i] ?? 0)}
         </td>
-        <td className="tbody-td border border-black font-semibold">
+        <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
           {formatNumber(baseTotals.monthAllocTotals[i] ?? 0)}
         </td>
       </React.Fragment>

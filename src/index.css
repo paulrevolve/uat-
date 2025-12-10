@@ -93,11 +93,11 @@
   }
 
   .thead {
-    @apply bg-gray-200 sticky top-0;
+    @apply bg-gray-100 sticky top-0;
   }
 
   .th-thead {
-    @apply px-2 py-1 text-xs font-bold text-gray-600 capitalize tracking-wider text-center;
+    @apply px-2 py-1 text-xs font-bold text-gray-600 capitalize tracking-wider text-center  ;
   }
 
   .tbody {
