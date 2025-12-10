@@ -53,13 +53,11 @@ const AnalysisByPeriodContent = ({
       currentOrgId,
       dynamicDateRanges,
       selectedRevenueView,
-      planType,
-      rawApiResponse,
-      fiscalYearParam
+      planType
     ) => {
       // console.log(
       //   "transformApiDataToFinancialRows: RAW apiResponse",
-      //   apiResponse  
+      //   apiResponse
       // );
       // console.log(
       //   "transformApiDataToFinancialRows: currentOrgId",
@@ -105,34 +103,6 @@ const AnalysisByPeriodContent = ({
 
       const totalRevenueOverall = apiResponse.revenue || 0;
 
-      // Compute startYear using raw API data if available (falls back to ranges)
-      let startYear = null;
-      try {
-        const years = [];
-        // months from monthlyRevenueSummary
-        if (rawApiResponse?.monthlyRevenueSummary?.length > 0) {
-          rawApiResponse.monthlyRevenueSummary.forEach((m) => years.push(Number(m.year)));
-        }
-        // employee payrolls
-        if (rawApiResponse?.employeeForecastSummary?.length > 0) {
-          rawApiResponse.employeeForecastSummary.forEach((emp) => {
-            (emp.emplSchedule?.payrollSalary || []).forEach((p) => years.push(Number(p.year)));
-          });
-        }
-        // direct/indirect cost forecasts
-        [rawApiResponse?.directCOstForecastSummary, rawApiResponse?.indirectCostForecastSummary].forEach((list) => {
-          (list || []).forEach((nl) => {
-            (nl.directCostSchedule?.forecasts || nl.indirectCostSchedule?.forecasts || []).forEach((f) => years.push(Number(f.year)));
-          });
-        });
-
-        if (years.length > 0) startYear = Math.min(...years.filter((y) => !isNaN(y)));
-      } catch (err) {
-        startYear = null;
-      }
-
-      const selectedYear = fiscalYearParam && fiscalYearParam !== "All" ? parseInt(fiscalYearParam, 10) : null;
-
       // Monthly Revenue + Staff/Non-Labor cost
       const monthlyRevenueSummary = apiResponse.monthlyRevenueSummary || [];
       monthlyRevenueSummary.forEach((monthData) => {
@@ -162,62 +132,6 @@ const AnalysisByPeriodContent = ({
         0
       );
       const totalProfitOverall = totalRevenueOverall - totalExpenseOverall;
-
-      // ---------- PRIOR YEAR CALCULATION ----------
-      // Prior year covers from startYear up to selectedYear - 1 (inclusive)
-      const priorYearTotals = {};
-      if (startYear && selectedYear && startYear < selectedYear) {
-        const priorStart = startYear;
-        const priorEnd = selectedYear - 1;
-
-        // Helper to build monthRange string
-        const monthKey = (m, y) => `${String(m).padStart(2, "0")}/${y}`;
-
-        // Revenue prior-year sum
-        let priorRevenue = 0;
-        (rawApiResponse?.monthlyRevenueSummary || []).forEach((m) => {
-          const y = Number(m.year);
-          if (y >= priorStart && y <= priorEnd) priorRevenue += Number(m.revenue || 0);
-        });
-
-        // Staff prior-year sum
-        let priorStaff = 0;
-        (rawApiResponse?.employeeForecastSummary || []).forEach((empSummary) => {
-          (empSummary.emplSchedule?.payrollSalary || []).forEach((p) => {
-            const y = Number(p.year);
-            if (y >= priorStart && y <= priorEnd) priorStaff += Number(p.totalBurdenCost || p.cost || 0);
-          });
-        });
-
-        // Non-labor prior-year sum
-        let priorNonLabor = 0;
-        const allNonLabor = [
-          ...(rawApiResponse?.directCOstForecastSummary || []),
-          ...(rawApiResponse?.indirectCostForecastSummary || []),
-        ];
-        allNonLabor.forEach((nl) => {
-          const schedules = nl.directCostSchedule?.forecasts || nl.indirectCostSchedule?.forecasts || [];
-          schedules.forEach((s) => {
-            const y = Number(s.year);
-            if (y >= priorStart && y <= priorEnd) {
-              if (planType === "EAC") priorNonLabor += Number(s.actualamt || 0);
-              else if (planType === "BUD") priorNonLabor += Number(s.forecastedamt || 0);
-              else priorNonLabor += Number((s.cost || 0) + (s.fringe || 0) + (s.overhead || 0) + (s.gna || 0) + (s.materials || 0));
-            }
-          });
-        });
-
-        const priorExpense = priorStaff + priorNonLabor;
-        const priorProfit = priorRevenue - priorExpense;
-
-        priorYearTotals.revenue = priorRevenue;
-        priorYearTotals.staff = priorStaff;
-        priorYearTotals.nonLabor = priorNonLabor;
-        priorYearTotals.expense = priorExpense;
-        priorYearTotals.profit = priorProfit;
-        priorYearTotals.profitOnCost = priorExpense !== 0 ? priorProfit / priorExpense : 0;
-        priorYearTotals.profitOnRevenue = priorRevenue !== 0 ? priorProfit / priorRevenue : 0;
-      }
 
       // ---------- EMPLOYEES ----------
       // const uniqueEmployeesMap = new Map();
@@ -530,29 +444,6 @@ const AnalysisByPeriodContent = ({
           (s, v) => s + v,
           0
         );
-        // compute priorYear total for this employee using rawApiResponse when available
-        employee.priorYear = 0;
-        if (startYear && selectedYear && rawApiResponse?.employeeForecastSummary) {
-          const empIdMatches = (s) => {
-            // We don't necessarily have a unique lookup id; compare emplId and some attributes
-            return (
-              s.emplId === employee.name?.match(/\(([^)]+)\)/)?.[1] || s.emplId === employee.id
-            );
-          };
-
-          rawApiResponse.employeeForecastSummary.forEach((empSummary) => {
-            // create matching key similar to earlier compositeKey
-            const compositeKeyRaw = `${empSummary.emplId}-${empSummary.plcCode}-${empSummary.orgId}-${empSummary.accID}`;
-            if (compositeKeyRaw === employee.id) {
-              (empSummary.emplSchedule?.payrollSalary || []).forEach((s) => {
-                const y = Number(s.year);
-                if (y >= startYear && y <= selectedYear - 1) {
-                  employee.priorYear += Number(s.totalBurdenCost || s.cost || 0);
-                }
-              });
-            }
-          });
-        }
       });
 
       Array.from(nonLaborAcctDetailsMap.values()).forEach((acctGroup) => {
@@ -561,30 +452,6 @@ const AnalysisByPeriodContent = ({
           0
         );
         acctGroup.employees = Array.from(acctGroup.employees.values());
-
-        // compute priorYear for non-labor account groups using rawApiResponse when available
-        acctGroup.priorYear = 0;
-        if (startYear && selectedYear && rawApiResponse) {
-          const allNonLabor = [
-            ...(rawApiResponse.directCOstForecastSummary || []),
-            ...(rawApiResponse.indirectCostForecastSummary || []),
-          ];
-
-          allNonLabor.forEach((nl) => {
-            const accId = nl.accID || nl.accId || nl.accId;
-            if (String(accId) === String(acctGroup.id)) {
-              const schedules = nl.directCostSchedule?.forecasts || nl.indirectCostSchedule?.forecasts || [];
-              schedules.forEach((s) => {
-                const y = Number(s.year);
-                if (y >= startYear && y <= selectedYear - 1) {
-                  if (planType === "EAC") acctGroup.priorYear += Number(s.actualamt || 0);
-                  else if (planType === "BUD") acctGroup.priorYear += Number(s.forecastedamt || 0);
-                  else acctGroup.priorYear += Number((s.cost || 0) + (s.fringe || 0) + (s.overhead || 0) + (s.gna || 0) + (s.materials || 0));
-                }
-              });
-            }
-          });
-        }
       });
 
       // ---------- PROFIT ----------
@@ -609,7 +476,6 @@ const AnalysisByPeriodContent = ({
         id: `revenue-${currentOrgId}`,
         description: "Revenue",
         total: totalRevenueOverall,
-        priorYear: priorYearTotals.revenue || 0,
         data: selectedRevenueData,
         tnmRevenueData: monthlyRevenueData,
         cpffRevenueData: monthlyRevenueData,
@@ -621,7 +487,6 @@ const AnalysisByPeriodContent = ({
         id: `total-staff-cost-${currentOrgId}`,
         description: "Total Staff Cost",
         total: totalStaffCostOverall,
-        priorYear: priorYearTotals.staff || 0,
         data: totalStaffCostByMonth,
         type: "expandable",
         employees: Array.from(uniqueEmployeesMap.values()),
@@ -632,7 +497,6 @@ const AnalysisByPeriodContent = ({
         id: `non-labor-staff-cost-${currentOrgId}`,
         description: "Non-Labor Staff Cost",
         total: totalNonLaborCostOverall,
-        priorYear: priorYearTotals.nonLabor || 0,
         data: totalNonLaborCostByMonth,
         type: "expandable",
         nonLaborAccts: Array.from(nonLaborAcctDetailsMap.values()),
@@ -643,7 +507,6 @@ const AnalysisByPeriodContent = ({
         id: `total-expense-${currentOrgId}`,
         description: "Total Expense",
         total: totalExpenseOverall,
-        priorYear: priorYearTotals.expense || 0,
         data: totalExpenseData,
         type: "summary",
         orgId: currentOrgId,
@@ -653,7 +516,6 @@ const AnalysisByPeriodContent = ({
         id: `profit-${currentOrgId}`,
         description: "Profit",
         total: totalProfitOverall,
-        priorYear: priorYearTotals.profit || 0,
         data: profitData,
         type: "summary",
         orgId: currentOrgId,
@@ -669,7 +531,6 @@ const AnalysisByPeriodContent = ({
         id: `profit-cost-${currentOrgId}`,
         description: "Profit % on Cost",
         total: overallProfitOnCost,
-        priorYear: priorYearTotals.profitOnCost || 0,
         data: profitOnCostData,
         type: "summary",
         orgId: currentOrgId,
@@ -686,7 +547,6 @@ const AnalysisByPeriodContent = ({
         id: `profit-revenue-${currentOrgId}`,
         description: "Profit % on Revenue",
         total: overallProfitOnRevenue,
-        priorYear: priorYearTotals.profitOnRevenue || 0,
         data: profitOnRevenueData,
         type: "summary",
         orgId: currentOrgId,
@@ -931,8 +791,7 @@ const AnalysisByPeriodContent = ({
         dynamicDateRanges,
         selectedRevenueView,
         type,
-        initialApiData,
-        fiscalYear
+        initialApiData.revenue
       );
       // console.log(
       //   "Transformed Data (after filter & transform):",
@@ -955,7 +814,6 @@ const AnalysisByPeriodContent = ({
     selectedRevenueView,
     transformApiDataToFinancialRows,
     type,
-    fiscalYear,
   ]);
 
   const toggleStaffRow = (id) => {
@@ -1220,9 +1078,6 @@ const AnalysisByPeriodContent = ({
                 <th className="py-3 px-4 text-right text-sm font-semibold text-blue-700 uppercase tracking-wider whitespace-nowrap sticky top-0 z-10 bg-gray-100 bg-opacity-50">
                   CTD Total
                 </th>
-                <th className="py-3 px-4 text-right text-sm font-semibold text-blue-700 uppercase tracking-wider whitespace-nowrap sticky top-0 z-10 bg-gray-100 bg-opacity-50">
-                  Prior Year
-                </th>
                 {dynamicDateRanges.length > 0 &&
                   dynamicDateRanges.map((range) => {
                     const [monthPart, yearPart] = range.split("/");
@@ -1243,7 +1098,7 @@ const AnalysisByPeriodContent = ({
               {financialData.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={dynamicDateRanges.length + 8}
+                    colSpan={dynamicDateRanges.length + 7}
                     className="py-8 text-center text-gray-600 text-lg"
                   >
                     {isLoading
@@ -1319,11 +1174,6 @@ const AnalysisByPeriodContent = ({
                         {row.description.includes("Profit %")
                           ? formatValue(row.total, false, true)
                           : formatValue(row.total)}
-                      </td>
-                      <td className="py-3 px-4 text-right whitespace-nowrap text-gray-800">
-                        {row.description.includes("Profit %")
-                          ? formatValue(row.priorYear, false, true)
-                          : formatValue(row.priorYear || 0)}
                       </td>
                       {dynamicDateRanges.map((range) => {
                         let dataForRange;
@@ -1417,9 +1267,6 @@ const AnalysisByPeriodContent = ({
                                 <td className="py-2 px-4 text-right whitespace-nowrap text-gray-800">
                                   {formatValue(employee.cost)}
                                 </td>
-                                <td className="py-2 px-4 text-right whitespace-nowrap text-gray-800">
-                                  {formatValue(employee.priorYear || 0)}
-                                </td>
                                 {dynamicDateRanges.map((currentRange) => (
                                   <td
                                     key={`${employee.id}-${currentRange}-cost`}
@@ -1453,9 +1300,6 @@ const AnalysisByPeriodContent = ({
                                       ).reduce((sum, val) => sum + val, 0)
                                     )}
                                   </td>
-                                    <td className="py-2 px-4 text-right whitespace-nowrap text-gray-700">
-                                      {formatValue(employee.priorYear || 0)}
-                                    </td>
                                   {dynamicDateRanges.map((currentRange) => (
                                     <td
                                       key={`${employee.id}-hours-${currentRange}-amount`}
@@ -1502,9 +1346,6 @@ const AnalysisByPeriodContent = ({
                                             <td className="py-2 px-4 text-right whitespace-nowrap text-gray-700">
                                               {formatValue(detailTotal)}
                                             </td>
-                                              <td className="py-2 px-4 text-right whitespace-nowrap text-gray-700">
-                                                {formatValue(0)}
-                                              </td>
                                             {dynamicDateRanges.map(
                                               (currentRange) => (
                                                 <td
@@ -1571,9 +1412,6 @@ const AnalysisByPeriodContent = ({
                                 <td className="py-2 px-4 text-right whitespace-nowrap text-gray-800">
                                   {formatValue(acctGroup.total)}
                                 </td>
-                                  <td className="py-2 px-4 text-right whitespace-nowrap text-gray-800">
-                                    {formatValue(acctGroup.priorYear || 0)}
-                                  </td>
                                 {dynamicDateRanges.map((currentRange) => (
                                   <td
                                     key={`${acctGroup.id}-${currentRange}-cost`}
