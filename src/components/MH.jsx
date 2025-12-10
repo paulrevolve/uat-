@@ -20,10 +20,6 @@ const [costData, setCostData] = useState([]);
   const [rate, setRate] = useState(0);
   const [closePeriodMonth, setClosePeriodMonth] = useState(null); // 1–12
 const [closePeriodYear, setClosePeriodYear] = useState(null);
-
-
-
-
   const [costTotals, setCostTotals] = useState({
   totalYTDCostActualAmt: 0,
   totalYTDCostBudgetAmt: 0,
@@ -38,9 +34,7 @@ const [baseTotals, setBaseTotals] = useState({
   monthAllocTotals: Array(12).fill(0),
 });
 
-
   const monthNames = monthsHeader;
-
   // config: closing_period + escallation_percent
   const fetchConfig = async () => {
     try {
@@ -81,6 +75,7 @@ if (closing?.value) {
     rows.map((row) => ({
       orgId: row.orgId,
       acctId: row.acctId,
+      accountName : row.accountName,
       ytdActual: row.ytdActualAmt,
       ytdBudget: row.ytdBudgetedAmt,
       months: monthsHeader.map((_, idx) => {
@@ -99,6 +94,9 @@ const mapBaseData = (rows) =>
   rows.map((row) => ({
     orgId: row.orgId,
     acctId: row.acctId,
+    allocationOrgId: row.allocationOrgId,
+    allocationAcctId: row.allocationAcctId,
+    accountName: row.accountName,
     ytdBase: row.ytdActualAmt,          // 22,111,491.57
     ytdAllocation: row.ytdAllocationAmt, // 3,561,851.73
     ytdBudget: row.ytdBudgetedAmt,      // 0
@@ -227,12 +225,11 @@ setRate(json.rate ?? 0);
     <input
       type="text"
       className="border border-gray-300 rounded px-2 py-1 text-sm w-20"
-      value={
+value={
     rate === null || rate === undefined || rate === ""
       ? ""
       : `${formatNumber(rate)}%`
   }
-
       readOnly
     />
   </div>
@@ -285,7 +282,10 @@ setRate(json.rate ?? 0);
               <tr>
                 <th className=" th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
                   Account Id
-                </th>
+                </th>    
+                <th className=" th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+                  Account Name
+                </th>            
                 <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
                   Org Id
                 </th>
@@ -335,6 +335,9 @@ setRate(json.rate ?? 0);
                     {item.acctId}
                   </td>
                   <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+                    {item.accountName}
+                  </td>
+                  <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
                     {item.orgId}
                   </td>
                   <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
@@ -362,7 +365,7 @@ setRate(json.rate ?? 0);
             </tbody>
 <tfoot>
   <tr className="sticky-tfoot">
-    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm" colSpan={2}>
+    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm" colSpan={3}>
       Totals :
     </td>
     <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
@@ -371,7 +374,6 @@ setRate(json.rate ?? 0);
      <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
       {formatNumber(costTotals.totalYTDCostBudgetAmt)}
     </td>
-     
     {monthsHeader.map((_, i) => (
       <td key={i} className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
         {formatNumber(costTotals.monthTotals[i] ?? 0)}
@@ -379,8 +381,6 @@ setRate(json.rate ?? 0);
     ))}
   </tr>
 </tfoot>
-
-
           </table>
         </div>
       {/* )} */}
@@ -394,11 +394,20 @@ setRate(json.rate ?? 0);
         <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
           Account Id
         </th>
+         <th className=" th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+                  Account Name
+          </th>
         <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
           Org Id
         </th>
         <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
           YTD Base Amt
+        </th>
+        <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+          Allocation Org Id
+        </th>
+         <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
+          Allocation Acct Id
         </th>
         <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
           YTD Allocation Amt
@@ -462,11 +471,20 @@ setRate(json.rate ?? 0);
           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
             {item.acctId}
           </td>
+           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+                    {item.accountName}
+                  </td>
           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
             {item.orgId}
           </td>
           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
           {formatNumber(item.ytdBase)}
+          </td>
+          <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+            {item.allocationOrgId}
+          </td>
+          <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
+            {item.allocationAcctId}
           </td>
           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
             {formatNumber(item.ytdAllocation)}
@@ -491,12 +509,14 @@ setRate(json.rate ?? 0);
 
    <tfoot>
   <tr className="sticky-tfoot">
-    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm" colSpan={2}>
+    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm" colSpan={3}>
       Totals:
     </td>
     <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
       {formatNumber(baseTotals.ytdBaseTotal)}
     </td>
+    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm"></td>
+    <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm"></td>
     <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
       {formatNumber(baseTotals.ytdAllocTotal)}
     </td>
@@ -515,15 +535,12 @@ setRate(json.rate ?? 0);
     ))}
   </tr>
 </tfoot>
-
-
   </table>
 </div>
 </>
   )}
     </div>
   );
-
 };
 
 export default MH;

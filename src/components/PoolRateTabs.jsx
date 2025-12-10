@@ -6,13 +6,14 @@ import MH from "./MH";
 import Overhead from "./Overhead";
 import Rates from "./Rates";
 import GNA from "./GNA";
+import PoolRate from "./PoolRate";
 
 
 const PoolRateTabs = () => {
   const [activeTab, setActiveTab] = useState("Rates");
 
   const tabs = [
-    // { id: "Rates", label: "Rates" },
+    // { id: "Rate Configure", label: "Rate Configure" },
     { id: "Rate", label: "Rate" },
     { id: "Fringe", label: "Fringe" },
     { id: "HR", label: "HR" },
@@ -23,7 +24,7 @@ const PoolRateTabs = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      // case "Rates":
+      // case "Rate Configure":
       //   return <PoolRate />;
       case "Fringe":
         return <Fringe />;
