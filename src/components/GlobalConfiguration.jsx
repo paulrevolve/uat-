@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Select from "react-select";
 import { backendUrl } from "./config";

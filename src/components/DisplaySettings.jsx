@@ -1,5 +1,3 @@
-"use client"; // Important for client-side functionality in Next.js App Router
-
 import React, { useState, useEffect, useCallback } from "react";
 import { backendUrl } from "./config";
 

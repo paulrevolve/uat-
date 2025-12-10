@@ -1,4 +1,3 @@
-"use client";
 import { useState, useEffect, useCallback } from "react";
 import React from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";

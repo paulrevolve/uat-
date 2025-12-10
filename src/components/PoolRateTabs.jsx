@@ -1,13 +1,12 @@
 
 import React, { useState } from "react";
-
-import PoolRate from "./PoolRate";
 import Fringe from "./Fringe";
+import HR from "./HR";
+import MH from "./MH";
 import Overhead from "./Overhead";
-import HR from "./Hr";
-import MH from "./Mh";
-import GNA from "./Gna";
 import Rates from "./Rates";
+import GNA from "./GNA";
+
 
 const PoolRateTabs = () => {
   const [activeTab, setActiveTab] = useState("Rates");

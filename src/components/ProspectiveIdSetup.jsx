@@ -678,8 +678,6 @@
 
 // export default ProspectiveIDSetup;
 
-"use client";
-
 import React, { useState, useCallback, useEffect } from "react";
 import { FaSave, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
 import { toast } from "react-toastify";

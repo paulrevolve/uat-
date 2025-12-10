@@ -1,7 +1,4 @@
-"use client";
-
-import { useState, useEffect, useCallback } from "react";
-import React from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { data } from "react-router-dom";
 import { backendUrl } from "./config";
