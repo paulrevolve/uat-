@@ -116,6 +116,14 @@
   }
 }
 
+.sticky-tfoot {
+  position: sticky;
+  bottom: 0;
+  background-color: #f3f4f6;
+  /* close to your header gray */
+  z-index: 3;
+}
+
 .synchronized-tables-outer {
   width: 100%;
   overflow: hidden;
