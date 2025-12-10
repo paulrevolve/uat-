@@ -266,10 +266,10 @@ setRate(json.rate ?? 0);
       {error && <div className="table text-red-600">Error: {error}</div>}
 
       {/* COST TABLE */}
-      {!loading && !error && (
+    {!loading && !error && (
         <>
-        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-          <h3 className="text-sm font-semibold mb-2">Cost Account</h3>
+         <h3 className="text-sm font-semibold mt-2">Cost Account</h3>
+        <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
           <table className="table w-full">
             <thead className="thead">
               <tr>
@@ -369,8 +369,8 @@ setRate(json.rate ?? 0);
       {/* )} */}
 
       {/* BASE TABLE */}
-      <div className="mt-6 overflow-x-auto max-h-[60vh] overflow-y-auto">
-  <h3 className="text-sm font-semibold mb-2">Base Account</h3>
+      <h3 className="text-sm font-semibold mt-2">Base Account</h3>
+      <div className="mt-1 overflow-x-auto max-h-[40vh] overflow-y-auto">
   <table className="table w-full">
     <thead className="thead">
       <tr>
