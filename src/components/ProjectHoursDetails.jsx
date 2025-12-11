@@ -5922,7 +5922,7 @@ useEffect(() => {
           {showCopyButton && (
             <button
               onClick={handleCopySelectedRows}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium transition-colors duration-200 flex items-center gap-2"
+              className="blue-btn-common text-white px-4 py-2 rounded text-sm font-medium transition-colors duration-200 flex items-center gap-2"
               title="Copy selected rows to clipboard"
             >
               <svg
@@ -6046,7 +6046,7 @@ useEffect(() => {
                     setShowNewForm(true);
                   }
                 }}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-medium"
+                className="px-4 py-2 blue-btn-common text-white rounded hover:bg-blue-700 text-xs font-medium"
               >
                 {/* {showNewForm ? "Cancel" : "New"} */}
                 New
@@ -6077,7 +6077,7 @@ useEffect(() => {
                       handleSaveNewEntry();
                     }
                   }}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-medium"
+                  className="px-4 py-2 blue-btn-common text-white rounded  text-xs font-medium"
                 >
                   {newEntries.length > 0
                     ? `Save All (${newEntries.length})`
@@ -6112,7 +6112,7 @@ useEffect(() => {
                     setCopiedRowsData([]);
                     setCopiedMonthMetadata([]);
                   }}
-                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-xs font-medium"
+                  className="px-4 py-2 blue-btn-common text-white rounded  text-xs font-medium"
                 >
                   Cancel
                 </button>
@@ -6121,7 +6121,7 @@ useEffect(() => {
               {!showNewForm && (
                 <>
                   <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium"
+                    className="px-4 py-2 blue-btn-common text-white rounded  transition text-xs font-medium"
                     onClick={() => isEditable && setShowFindReplace(true)}
                   >
                     Find / Replace
@@ -6174,7 +6174,7 @@ useEffect(() => {
                   </button> */}
                   <button
   className={`px-4 py-2 text-white rounded transition text-xs font-medium
-    ${planType === "EAC" ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}
+    ${planType === "EAC" ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"}`}
   onClick={() => {
     // FIX: Check if any row is selected in the Set
     if (selectedRows.size === 0) {
@@ -6208,7 +6208,7 @@ useEffect(() => {
               )}
               {showNewForm && (
                 <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium"
+                  className="px-4 py-2 blue-btn-common text-white rounded  transition text-xs font-medium"
                   onClick={() => isEditable && setShowFillValues(true)}
                 >
                   Fill Values
@@ -6266,7 +6266,7 @@ useEffect(() => {
             disabled={!selectedEmployeeScheduleId}
             className={`px-4 py-2 rounded text-xs font-medium transition cursor-pointer ${
               selectedEmployeeScheduleId
-                ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                ? "blue-btn-common text-white "
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
           >

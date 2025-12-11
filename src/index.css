@@ -83,6 +83,10 @@
     @apply bg-green-600 text-white border-green-600 hover:bg-green-700 focus:ring-green-500;
   }
 
+  .blue-btn-common {
+    @apply bg-blue-400 hover:bg-blue-500
+  }
+
   /* Disabled button */
   .btn-disabled {
     @apply bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed shadow-none;

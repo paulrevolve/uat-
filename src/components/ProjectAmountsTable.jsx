@@ -4779,7 +4779,7 @@ const fetchAllSuggestionsOptimizedForAmounts = async (processedEntries) => {
         <div className="flex gap-2">
           {Object.values(hiddenRows).some(Boolean) && (
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium"
+              className="px-4 py-2 blue-btn-common text-white rounded  transition text-xs font-medium"
               onClick={showHiddenRows}
             >
               Show Hidden Rows
@@ -4821,7 +4821,7 @@ const fetchAllSuggestionsOptimizedForAmounts = async (processedEntries) => {
                   setShowNewForm(true);
                 }
               }}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-medium"
+              className="px-4 py-2 blue-btn-common text-white rounded  text-xs font-medium"
             >
               {showNewForm || newEntries.length > 0 ? "Cancel" : "New"}
             </button>
@@ -4831,7 +4831,7 @@ const fetchAllSuggestionsOptimizedForAmounts = async (processedEntries) => {
           {showCopyButton && newEntries.length === 0 && (
             <button
               onClick={handleCopySelectedRows}
-              className="px-4 py-2 bg-green-600 text-white text-xs font-semibold rounded-md hover:bg-green-700"
+              className="px-4 py-2 blue-btn-common text-white text-xs font-semibold rounded-md "
             >
               Copy Selected ({selectedRows.size})
             </button>
@@ -4861,7 +4861,7 @@ const fetchAllSuggestionsOptimizedForAmounts = async (processedEntries) => {
             initialData.status === "In Progress" && (
               <button
                 onClick={handlePasteMultipleRows}
-                className="px-4 py-2 bg-purple-600 text-white text-xs font-semibold rounded-md hover:bg-purple-700"
+                className="px-4 py-2 blue-btn-common text-white text-xs font-semibold rounded-md "
               >
                 Paste ({copiedRowsData.length} rows)
               </button>
@@ -4896,7 +4896,7 @@ const fetchAllSuggestionsOptimizedForAmounts = async (processedEntries) => {
                   handleSaveNewEntry();
                 }
               }}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-medium"
+              className="px-4 py-2 blue-btn-common text-white rounded  text-xs font-medium"
               disabled={isLoading}
             >
               {isLoading
@@ -4909,7 +4909,7 @@ const fetchAllSuggestionsOptimizedForAmounts = async (processedEntries) => {
 
           {!showNewForm && !shouldHideButtons && (
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium"
+              className="px-4 py-2 blue-btn-common text-white rounded  transition text-xs font-medium"
               onClick={() => {
                 if (isEditable) {
                   setShowFindReplace(true);
@@ -4939,7 +4939,7 @@ const fetchAllSuggestionsOptimizedForAmounts = async (processedEntries) => {
               className={`px-4 py-2 text-white rounded transition text-xs font-medium ${
                 shouldDisableDelete
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-red-600 hover:bg-red-700"
+                  : "bg-red-500 hover:bg-red-600"
               }`}
               onClick={() => {
                 if (!selectedEmployeeId) {
@@ -4972,7 +4972,7 @@ const fetchAllSuggestionsOptimizedForAmounts = async (processedEntries) => {
 
           {showNewForm && (
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium"
+              className="px-4 py-2 blue-btn-common text-white rounded  transition text-xs font-medium"
               onClick={() => {
                 if (isEditable) {
                   setShowFillValues(true);
@@ -4998,7 +4998,7 @@ const fetchAllSuggestionsOptimizedForAmounts = async (processedEntries) => {
             <>
               <button
                 onClick={handleSaveAllChanges}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-2"
+                className="blue-btn-common  disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-2"
                 disabled={isLoading}
               >
                 {isLoading

@@ -34,6 +34,27 @@ const [baseTotals, setBaseTotals] = useState({
   monthAllocTotals: Array(12).fill(0),
 });
 
+const [costSortDir, setCostSortDir] = useState("asc");   // for costData
+const [baseSortDir, setBaseSortDir] = useState("asc");   // for baseData
+
+
+const sortedCostData = [...costData].sort((a, b) => {
+  if (a.acctId === b.acctId) return 0;
+  if (costSortDir === "asc") {
+    return a.acctId > b.acctId ? 1 : -1;
+  }
+  return a.acctId < b.acctId ? 1 : -1;
+});
+
+const sortedBaseData = [...baseData].sort((a, b) => {
+  if (a.acctId === b.acctId) return 0;
+  if (baseSortDir === "asc") {
+    return a.acctId > b.acctId ? 1 : -1;
+  }
+  return a.acctId < b.acctId ? 1 : -1;
+});
+
+
   const monthNames = monthsHeader;
   // config: closing_period + escallation_percent
   const fetchConfig = async () => {
@@ -280,9 +301,11 @@ value={
           <table className="table w-full">
             <thead className="thead bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-20 border-b-2 border-gray-200">
               <tr>
-                <th className=" th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
-                  Account Id
-                </th>    
+                     <th className=" th-thead border border-gray-200 font-semibold text-gray-900 cursor-pointer" rowSpan={2}  onClick={() =>
+    setCostSortDir((prev) => (prev === "asc" ? "desc" : "asc"))
+  }>
+                  Account Id {costSortDir === "asc" ? "▲" : "▼"}
+                </th>   
                 <th className=" th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
                   Account Name
                 </th>            
@@ -328,7 +351,7 @@ value={
 </tr>
             </thead>
             <tbody className="tbody divide-y divide-gray-100">
-              {costData.map((item, idx) => (
+              {sortedCostData.map((item, idx) => (
                 <tr key={idx}
                 >
                   <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
@@ -391,8 +414,10 @@ value={
   <table className="table w-full">
     <thead className="thead">
       <tr>
-        <th className="th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
-          Account Id
+        <th className="th-thead border border-gray-200 font-semibold text-gray-900 cursor-pointer" rowSpan={2}  onClick={() =>
+    setBaseSortDir((prev) => (prev === "asc" ? "desc" : "asc"))
+  }>
+          Account Id {baseSortDir === "asc" ? "▲" : "▼"}
         </th>
          <th className=" th-thead border border-gray-200 font-semibold text-gray-900" rowSpan={2}>
                   Account Name
@@ -466,7 +491,7 @@ value={
     </thead>
 
     <tbody className="tbody">
-      {baseData.map((item, idx) => (
+      {sortedBaseData.map((item, idx) => (
         <tr key={idx}>
           <td className="tbody-td border border-gray-200 py-3 px-4 whitespace-nowrap font-mono text-sm">
             {item.acctId}

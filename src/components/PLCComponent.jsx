@@ -2270,7 +2270,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
             {/* ADD BUTTON */}
             <button
               onClick={handleAddRow}
-              className="bg-blue-500 text-white px-3 py-1 rounded text-xs font-normal hover:bg-blue-600 transition"
+              className="blue-btn-common text-white px-3 py-1 rounded text-xs font-normal transition"
               disabled={loading || newRate}
             >
               Add
@@ -2281,7 +2281,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
               <>
                 <button
                   onClick={handleSaveNewRate}
-                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition text-xs font-normal flex items-center space-x-1"
+                  className="blue-btn-common text-white px-3 py-1 rounded  transition text-xs font-normal flex items-center space-x-1"
                   disabled={loading}
                   title="Save"
                 >
@@ -2295,7 +2295,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                   title="Cancel"
                 >
                   <FaTimes className="text-sm" />
-                  <span>Cancel</span>
+                  {/* <span>Cancel</span> */}
                 </button>
               </>
             )}
@@ -2310,7 +2310,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                   className={`${
                     isEditing
                       ? "bg-gray-500 hover:bg-gray-600"
-                      : "bg-yellow-500 hover:bg-yellow-600"
+                      : "blue-btn-common"
                   } text-white px-3 py-1 rounded text-xs font-normal transition flex items-center space-x-1`}
                   disabled={loading || billingRatesSchedule.length === 0}
                   title={isEditing ? "Cancel Editing" : "Edit Bill Rates"}
@@ -2318,12 +2318,12 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                   {isEditing ? (
                     <>
                       <FaTimes className="text-sm" />
-                      <span>Cancel</span>
+                      {/* <span>Cancel</span> */}
                     </>
                   ) : (
                     <>
                       <FaEdit className="text-sm" />
-                      <span>Edit</span>
+                      {/* <span>Edit</span> */}
                     </>
                   )}
                 </button>
@@ -2332,7 +2332,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                 {isEditing && (
                   <button
                     onClick={handleUpdateAllChanges}
-                    className="bg-green-500 text-white px-3 py-1 rounded text-xs font-normal hover:bg-green-600 transition flex items-center space-x-1"
+                    className="blue-btn-common text-white px-3 py-1 rounded text-xs font-normal  transition flex items-center space-x-1"
                     disabled={loading}
                     title="Save Changes"
                   >
@@ -2351,7 +2351,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
               title="Delete Selected"
             >
               <FaTrash className="text-sm" />
-              <span>Delete</span>
+              {/* <span>Delete</span> */}
             </button>
           </div>
         </div>
@@ -2584,7 +2584,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
             {/* ADD BUTTON */}
             <button
               onClick={handleAddEmployeeRow}
-              className="bg-blue-500 text-white px-3 py-1 rounded text-xs font-normal hover:bg-blue-600 transition"
+              className="blue-btn-common text-white px-3 py-1 rounded text-xs font-normal transition"
               disabled={loading || newEmployeeRate}
             >
               Add
@@ -2595,7 +2595,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
               <>
                 <button
                   onClick={handleSaveNewEmployeeRate}
-                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition text-xs font-normal flex items-center space-x-1"
+                  className="blue-btn-common text-white px-3 py-1 rounded  transition text-xs font-normal flex items-center space-x-1"
                   disabled={loading}
                   title="Save"
                 >
@@ -2609,7 +2609,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                   title="Cancel"
                 >
                   <FaTimes className="text-sm" />
-                  <span>Cancel</span>
+                  {/* <span>Cancel</span> */}
                 </button>
               </>
             )}
@@ -2626,7 +2626,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                   className={`${
                     isEmployeeEditing
                       ? "bg-gray-500 hover:bg-gray-600"
-                      : "bg-yellow-500 hover:bg-yellow-600"
+                      : "blue-btn-common"
                   } text-white px-3 py-1 rounded text-xs font-normal transition flex items-center space-x-1`}
                   disabled={loading || employeeBillingRates.length === 0}
                   title={
@@ -2636,12 +2636,12 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                   {isEmployeeEditing ? (
                     <>
                       <FaTimes className="text-sm" />
-                      <span>Cancel</span>
+                      {/* <span>Cancel</span> */}
                     </>
                   ) : (
                     <>
                       <FaEdit className="text-sm" />
-                      <span>Edit</span>
+                      {/* <span>Edit</span> */}
                     </>
                   )}
                 </button>
@@ -2650,7 +2650,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                 {isEmployeeEditing && (
                   <button
                     onClick={handleUpdateAllEmployeeChanges} // implement as needed
-                    className="bg-green-500 text-white px-3 py-1 rounded text-xs font-normal hover:bg-green-600 transition flex items-center space-x-1"
+                    className="blue-btn-common text-white px-3 py-1 rounded text-xs font-normal  transition flex items-center space-x-1"
                     disabled={loading}
                     title="Save Changes"
                   >
@@ -2671,7 +2671,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
               title="Delete Selected"
             >
               <FaTrash className="text-sm" />
-              <span>Delete</span>
+              {/* <span>Delete</span> */}
             </button>
           </div>
         </div>
@@ -2931,7 +2931,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
           <div className="w-1/5 flex justify-end items-center space-x-2">
             <button
               onClick={handleAddVendorRow}
-              className="bg-blue-500 text-white px-3 py-1 rounded text-xs font-normal hover:bg-blue-600 transition"
+              className="blue-btn-common text-white px-3 py-1 rounded text-xs font-normal transition"
               disabled={loading || newVendorRate}
             >
               Add
@@ -2940,7 +2940,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
               <>
                 <button
                   onClick={handleSaveNewVendorRate}
-                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition text-xs font-normal flex items-center space-x-1"
+                  className="blue-btn-common text-white px-3 py-1 rounded  transition text-xs font-normal flex items-center space-x-1"
                   disabled={loading}
                   title="Save"
                 >
@@ -2954,7 +2954,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                   title="Cancel"
                 >
                   <FaTimes className="text-sm" />
-                  <span>Cancel</span>
+                  {/* <span>Cancel</span> */}
                 </button>
               </>
             )}
@@ -2969,7 +2969,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                   className={`${
                     isVendorEditing
                       ? "bg-gray-500 hover:bg-gray-600"
-                      : "bg-yellow-500 hover:bg-yellow-600"
+                      : "blue-btn-common"
                   } text-white px-3 py-1 rounded text-xs font-normal transition flex items-center space-x-1`}
                   disabled={loading || vendorBillingRates.length === 0}
                   title={isVendorEditing ? "Cancel Editing" : "Edit Bill Rates"}
@@ -2977,19 +2977,19 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
                   {isVendorEditing ? (
                     <>
                       <FaTimes className="text-sm" />
-                      <span>Cancel</span>
+                      {/* <span>Cancel</span> */}
                     </>
                   ) : (
                     <>
                       <FaEdit className="text-sm" />
-                      <span>Edit</span>
+                      {/* <span>Edit</span> */}
                     </>
                   )}
                 </button>
                 {isVendorEditing && (
                   <button
                     onClick={handleUpdateAllVendors} // implement as needed
-                    className="bg-green-500 text-white px-3 py-1 rounded text-xs font-normal hover:bg-green-600 transition flex items-center space-x-1"
+                    className="blue-btn-common text-white px-3 py-1 rounded text-xs font-normal  transition flex items-center space-x-1"
                     disabled={loading}
                     title="Save Changes"
                   >
@@ -3008,7 +3008,7 @@ const PLCComponent = ({ selectedProjectId, selectedPlan, showPLC }) => {
               title="Delete Selected"
             >
               <FaTrash className="text-sm" />
-              <span>Delete</span>
+              {/* <span>Delete</span> */}
             </button>
           </div>
         </div>
