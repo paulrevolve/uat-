@@ -289,6 +289,7 @@ const RevenueCeilingComponent = ({ selectedPlan, revenueAccount }) => {
               type="checkbox"
               className="text-sm font-normal"
               checked={useFixedRevenue}
+              disabled={!setupData}
               onChange={(e) =>
                 handleSetupCheckboxChange("overrideRevAmtFl", e.target.checked)
               }
@@ -302,6 +303,7 @@ const RevenueCeilingComponent = ({ selectedPlan, revenueAccount }) => {
               type="checkbox"
               className="text-sm font-normal"
               checked={overrideAdjustments}
+              disabled={!setupData}
               onChange={(e) =>
                 handleSetupCheckboxChange(
                   "useBillBurdenRates",

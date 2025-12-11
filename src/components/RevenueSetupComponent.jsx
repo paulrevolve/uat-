@@ -101,6 +101,10 @@ const RevenueSetupComponent = ({ selectedPlan, revenueAccount }) => {
   };
 
   useEffect(() => {
+
+    setRevenueFormula("");
+  setRevenueType("");
+  setSetupId(0);
     setRevenueAccountState(revenueAccount || "");
 
     axios
@@ -127,6 +131,7 @@ const RevenueSetupComponent = ({ selectedPlan, revenueAccount }) => {
           const data = response.data;
           // console.log("ProjBgtRevSetup GET response:", data);
           setSetupId(data.id || 0);
+
           setRevenueFormula(data.revType || ""); // Modified: Set revenueFormula from revType
           setRevenueType(data.revType || ""); // Modified: Also set revenueType to keep in sync
           // setAtRiskValue(data.atRiskAmt.toString());
@@ -154,7 +159,7 @@ const RevenueSetupComponent = ({ selectedPlan, revenueAccount }) => {
           // console.error("Error fetching project budget revenue setup:", error)
         );
     }
-  }, [selectedPlan, revenueAccount]);
+  }, [selectedPlan, revenueAccount,backendUrl]);
 
   const handleSave = () => {
     if (!revenueFormula || revenueFormula === "") {
