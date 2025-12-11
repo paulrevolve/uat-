@@ -366,7 +366,15 @@ const ProjectPlanTable = ({
         onPlanSelect(latest);
       }
     }
-  }, [plans]);
+  }, [plans, selectedPlan, onPlanSelect]);
+
+  // Helper to get the current plan state from the plans array (always fresh, not from stale prop)
+  const getCurrentPlan = () => {
+    if (!selectedPlan) return null;
+    return plans.find(
+      (p) => p.plId === selectedPlan.plId && p.projId === selectedPlan.projId
+    ) || selectedPlan;
+  };
 
   const refreshPlans = async () => {
     if (!projectId) {
@@ -978,6 +986,7 @@ const handleRowClick = (plan) => {
       }
     }
   };
+  
 
   //   const handleVersionCodeChange = async (idx, value) => {
   //     const prevPlans = [...plans];
@@ -2254,21 +2263,22 @@ const getActionOptions = (plan) => {
   };
 
   const getTopButtonDisabled = (field) => {
-    if (!selectedPlan || !selectedPlan.plType || !selectedPlan.version)
+    const currentPlan = getCurrentPlan();
+    if (!currentPlan || !currentPlan.plType || !currentPlan.version)
       return true;
-    if (field === "isCompleted") return !!selectedPlan.isApproved;
-    if (field === "isApproved") return !selectedPlan.isCompleted;
+    if (field === "isCompleted") return !!currentPlan.isApproved;
+    if (field === "isApproved") return !currentPlan.isCompleted;
     if (field === "finalVersion") {
       // Check if any other plan with same plType and same projId has finalVersion checked
       const anotherFinalVersionIdx = plans.findIndex(
         (p) =>
-          p.plId !== selectedPlan.plId &&
-          p.plType === selectedPlan.plType &&
-          p.projId === selectedPlan.projId &&
+          p.plId !== currentPlan.plId &&
+          p.plType === currentPlan.plType &&
+          p.projId === currentPlan.projId &&
           p.finalVersion
       );
       if (anotherFinalVersionIdx !== -1) return true;
-      return !selectedPlan.isApproved;
+      return !currentPlan.isApproved;
     }
     return false;
   };
@@ -2459,33 +2469,13 @@ const getActionOptions = (plan) => {
         </div>
       )}
 
-      {/* New Business Popup Overlay - positioned specifically over the table area */}
-
-      {showNewBusinessPopup && (
-        <div className="absolute inset-0 z-30">
-          {/* Blur overlay */}
-          <div className="absolute inset-0 bg-white bg-opacity-80 backdrop-blur-sm"></div>
-
-          {/* Popup container */}
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-2xl border border-gray-300 w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-              {/* Content - with proper scrolling */}
-              <div className="flex-1 overflow-y-auto p-4">
-                <NewBusiness
-                  onClose={() => setShowNewBusinessPopup(false)}
-                  onSaveSuccess={handleNewBusinessSave}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* New Business popup will be rendered inside the table container below */}
 
       {/* Your existing content with blur effect when popup is open */}
       <div
-        className={`transition-all duration-200 ${
-          showNewBusinessPopup ? "blur-sm pointer-events-none" : ""
-        }`}
+        // className={`transition-all duration-200 ${
+        //   showNewBusinessPopup ? "blur-sm pointer-events-none" : ""
+        // }`}
       >
         {/* 4. ✅ ADDED: Conditional Manual Date Input UI */}
         {filteredProjects.length > 0 && isDateMissing && (
@@ -2745,17 +2735,17 @@ const getActionOptions = (plan) => {
                   className={`btn1 ${
                     getTopButtonDisabled("isCompleted") || isActionLoading
                       ? "btn-disabled"
-                      : selectedPlan?.status === "Submitted"
+                      : getCurrentPlan()?.status === "Submitted"
                       ? "btn-orange"
                       : "btn-blue"
                   }`}
                   title={
-                    selectedPlan?.status === "Submitted" ? "Unsubmit" : "Submit"
+                    getCurrentPlan()?.status === "Submitted" ? "Unsubmit" : "Submit"
                   }
                 >
                   {isActionLoading
                     ? "Processing..."
-                    : selectedPlan?.status === "Submitted"
+                    : getCurrentPlan()?.status === "Submitted"
                     ? "Unsubmit"
                     : "Submit"}
                 </button>
@@ -2769,21 +2759,21 @@ const getActionOptions = (plan) => {
                   className={`btn1 ${
                     getTopButtonDisabled("isApproved") || isActionLoading
                       ? "btn-disabled"
-                      : selectedPlan?.status === "Approved" ||
-                        selectedPlan?.finalVersion
+                      : getCurrentPlan()?.status === "Approved" ||
+                        getCurrentPlan()?.finalVersion
                       ? "btn-orange"
                       : "btn-blue"
                   }`}
                   title={
-                    selectedPlan?.status === "Approved"
+                    getCurrentPlan()?.status === "Approved"
                       ? "Unapprove"
                       : "Approve"
                   }
                 >
                   {isActionLoading
                     ? "Processing..."
-                    : selectedPlan?.status === "Approved" ||
-                      selectedPlan?.finalVersion
+                    : getCurrentPlan()?.status === "Approved" ||
+                      getCurrentPlan()?.finalVersion
                     ? "Unapprove"
                     : "Approve"}
                 </button>
@@ -2797,15 +2787,15 @@ const getActionOptions = (plan) => {
                   className={`btn1 ${
                     getTopButtonDisabled("finalVersion") || isActionLoading
                       ? "btn-disabled"
-                      : selectedPlan?.finalVersion
+                      : getCurrentPlan()?.finalVersion
                       ? "btn-orange"
                       : "btn-blue"
                   }`}
-                  title={selectedPlan?.finalVersion ? "Unconclude" : "Conclude"}
+                  title={getCurrentPlan()?.finalVersion ? "Unconclude" : "Conclude"}
                 >
                   {isActionLoading
                     ? "Processing..."
-                    : selectedPlan?.finalVersion
+                    : getCurrentPlan()?.finalVersion
                     ? "Unconclude"
                     : "Conclude"}
                 </button>
@@ -2907,8 +2897,31 @@ const getActionOptions = (plan) => {
           </div>
         </div>
 
-        <div className="rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto h-85">
+        <div
+          className={
+            `rounded-2xl border border-gray-200 overflow-hidden relative ${
+              showNewBusinessPopup ? "" : ""
+            }`
+          }
+        >
+          {/* Table area (popup will be injected here when active) */}
+          {showNewBusinessPopup && (
+            <div className="absolute inset-0 z-40">
+              <div className="absolute inset-0 bg-white bg-opacity-80 backdrop-blur-sm"></div>
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg  border border-gray-300 w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+                  <div className="flex-1 overflow-y-auto p-4">
+                    <NewBusiness
+                      onClose={() => setShowNewBusinessPopup(false)}
+                      onSaveSuccess={handleNewBusinessSave}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className={`overflow-x-auto h-85 ${showNewBusinessPopup ? "blur-sm pointer-events-none" : ""}`}>
             <table className="min-w-full table-auto divide-y divide-gray-200">
               <thead className="bg-gray-200 sticky top-0">
                 <tr>
