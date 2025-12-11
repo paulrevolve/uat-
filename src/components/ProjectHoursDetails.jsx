@@ -14,7 +14,7 @@ const EMPLOYEE_COLUMNS = [
   { key: "acctId", label: "Account" },
   { key: "acctName", label: "Account Name" },
   { key: "orgId", label: "Organization" },
-  { key: "glcPlc", label: "Plc" },
+  { key: "glcPlc", label: "PLC" },
   { key: "isRev", label: "Rev" },
   { key: "isBrd", label: "Brd" },
   { key: "status", label: "Status" },
@@ -47,6 +47,51 @@ function isMonthEditable(duration, closedPeriod, planType) {
     (durationYear === closedYear && durationMonth >= closedMonth)
   );
 }
+
+const hoursFormatDateDisplay = (value) => {
+    if (!value) return "N/A";
+    
+    // 1. Check for YYYY-MM-DD format (like from date picker)
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [year, month, day] = value.split('-');
+        // Output MM/DD/YYYY directly from the string parts
+        return `${month}/${day}/${year}`;
+    }
+    
+    // 2. Fallback for ISO/other formats, try to format as UTC date string to avoid timezone shift
+    try {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return "N/A";
+        
+        // Use UTC getter methods to prevent local timezone shift
+        const y = date.getUTCFullYear();
+        const m = date.getUTCMonth() + 1; // Month is 0-indexed
+        const d = date.getUTCDate();
+        
+        // Format as MM/DD/YYYY
+        return `${m < 10 ? '0' + m : m}/${d < 10 ? '0' + d : d}/${y}`;
+    } catch (e) {
+        return "N/A";
+    }
+};
+
+// const hoursFormatDateDisplay = (value) => {
+//     if (!value) return "N/A";
+//     if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+//         const [year, month, day] = value.split('-');
+//         // Output MM/DD/YYYY directly from the string parts
+//         return `${month}/${day}/${year}`;
+//     }
+//     // Fallback logic if value is a Date object or full ISO string (optional, keeps existing logic)
+//     try {
+//         const date = new Date(value);
+//         if (isNaN(date.getTime())) return "N/A";
+//         // Use local formatting if the incoming string wasn't YYYY-MM-DD
+//         return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+//     } catch (e) {
+//         return "N/A";
+//     }
+// };
 
 const ProjectHoursDetails = ({
   planId,
@@ -149,7 +194,28 @@ const ProjectHoursDetails = ({
   const [cachedProjectData, setCachedProjectData] = useState(null);
   const [cachedOrgData, setCachedOrgData] = useState(null);
 
+  
+
   const [showEmployeeSchedule, setShowEmployeeSchedule] = useState(false);
+
+//   useEffect(() => {
+//     setFillStartDate(startDate);
+//     setFillEndDate(endDate);
+// }, [startDate, endDate]);
+
+useEffect(() => {
+    // This ensures that when a new plan is selected, or manual dates are entered, 
+    // the local state used by the fill tool correctly reflects the latest props.
+    setFillStartDate(startDate);
+    setFillEndDate(endDate);
+}, [startDate, endDate]);
+
+// useEffect(() => {
+//     // This ensures that when a new plan is selected, or manual dates are entered, 
+//     // the local state used by the fill tool correctly reflects the latest props.
+//     setFillStartDate(startDate);
+//     setFillEndDate(endDate);
+// }, [startDate, endDate]);
 
   const sortedDurations = useMemo(() => {
     return [...durations]

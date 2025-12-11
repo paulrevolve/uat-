@@ -57,6 +57,20 @@ const ProjectBudgetStatus = () => {
     return str.replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
+  const safeFormatDate = (value) => {
+  if (!value) return "N/A";
+  
+  // Directly convert YYYY-MM-DD string to MM/DD/YYYY string
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-');
+    // Note: We use month/day/year here to output the desired format from the input string.
+    return `${month}/${day}/${year}`;
+  }
+  
+  // Fallback to imported formatDate for other formats, maintaining existing structure
+  return formatDate(value); 
+};
+
   useEffect(() => {
     const userString = localStorage.getItem("currentUser");
     if (userString) {
@@ -323,47 +337,100 @@ const ProjectBudgetStatus = () => {
     setSelectedPlan(null);
   };
 
+  // const handlePlanSelect = (plan) => {
+  //   if (!plan) {
+  //     setSelectedPlan(null);
+  //     localStorage.removeItem("selectedPlan");
+  //     setActiveTab(null);
+  //     setForecastData([]);
+  //     setIsForecastLoading(false);
+  //     setAnalysisApiData([]);
+  //     setIsAnalysisLoading(false);
+  //     setAnalysisError(null);
+  //     return;
+  //   }
+
+  //   if (
+  //     !selectedPlan ||
+  //     selectedPlan.plId !== plan.plId ||
+  //     JSON.stringify(selectedPlan) !== JSON.stringify(plan)
+  //   ) {
+  //     const project = {
+  //       projId: plan.projId || "",
+  //       projName: plan.projName || "",
+  //       projStartDt: plan.projStartDt || "",
+  //       projEndDt: plan.projEndDt || "",
+  //       orgId: plan.orgId || "",
+  //       fundedCost: plan.fundedCost || "",
+  //       fundedFee: plan.fundedFee || "",
+  //       fundedRev: plan.fundedRev || "",
+  //     };
+
+  //     setFilteredProjects([project]);
+  //     setRevenueAccount(plan.revenueAccount || "");
+  //     setSelectedPlan(plan);
+  //     localStorage.setItem("selectedPlan", JSON.stringify(plan));
+  //     setForecastData([]);
+  //     setIsForecastLoading(false);
+  //     setAnalysisApiData([]);
+  //     setIsAnalysisLoading(false);
+  //     setAnalysisError(null);
+  //   }
+  // };
   const handlePlanSelect = (plan) => {
-    if (!plan) {
-      setSelectedPlan(null);
-      localStorage.removeItem("selectedPlan");
-      setActiveTab(null);
-      setForecastData([]);
-      setIsForecastLoading(false);
-      setAnalysisApiData([]);
-      setIsAnalysisLoading(false);
-      setAnalysisError(null);
-      return;
-    }
+    if (!plan) {
+      setSelectedPlan(null);
+      localStorage.removeItem("selectedPlan");
+      setActiveTab(null);
+      setForecastData([]);
+      setIsForecastLoading(false);
+      setAnalysisApiData([]);
+      setIsAnalysisLoading(false);
+      setAnalysisError(null);
+      return;
+    }
 
-    if (
-      !selectedPlan ||
-      selectedPlan.plId !== plan.plId ||
-      JSON.stringify(selectedPlan) !== JSON.stringify(plan)
-    ) {
-      const project = {
-        projId: plan.projId || "",
-        projName: plan.projName || "",
-        projStartDt: plan.projStartDt || "",
-        projEndDt: plan.projEndDt || "",
-        orgId: plan.orgId || "",
-        fundedCost: plan.fundedCost || "",
-        fundedFee: plan.fundedFee || "",
-        fundedRev: plan.fundedRev || "",
-      };
+    // --- CRITICAL FIX START ---
+    // Use an explicit check for necessary updates (ID change or Date change)
+    // The previous JSON.stringify check was overly strict and caused the issue.
 
-      setFilteredProjects([project]);
-      setRevenueAccount(plan.revenueAccount || "");
-      setSelectedPlan(plan);
-      localStorage.setItem("selectedPlan", JSON.stringify(plan));
-      setForecastData([]);
-      setIsForecastLoading(false);
-      setAnalysisApiData([]);
-      setIsAnalysisLoading(false);
-      setAnalysisError(null);
-    }
-  };
+    const isPlanIdentityChanged = 
+        !selectedPlan ||
+        selectedPlan.plId !== plan.plId ||
+        selectedPlan.projId !== plan.projId;
+    
+    const hasDatesChanged = 
+        selectedPlan && 
+        (selectedPlan.projStartDt !== plan.projStartDt || selectedPlan.projEndDt !== plan.projEndDt);
 
+    // Retain the core logic structure: Update only if essential state changes.
+    if (isPlanIdentityChanged || hasDatesChanged) {
+    // --- CRITICAL FIX END ---
+        
+      const project = {
+        projId: plan.projId || "",
+        projName: plan.projName || "",
+        // Crucial: Use the latest effective dates passed from the table
+        projStartDt: plan.projStartDt || "", 
+        projEndDt: plan.projEndDt || "",
+        // Retain existing properties for project object
+        orgId: plan.orgId || "",
+        fundedCost: plan.fundedCost || "",
+        fundedFee: plan.fundedFee || "",
+        fundedRev: plan.fundedRev || "",
+      };
+
+      setFilteredProjects([project]);
+      setRevenueAccount(plan.revenueAccount || "");
+      setSelectedPlan(plan); // The full plan object now has the correct dates
+      localStorage.setItem("selectedPlan", JSON.stringify(plan));
+      setForecastData([]);
+      setIsForecastLoading(false);
+      setAnalysisApiData([]);
+      setIsAnalysisLoading(false);
+      setAnalysisError(null);
+    }
+  };
   const handleTabClick = (tabName) => {
     if (!selectedPlan) {
       toast.info("Please select a plan first.", {
@@ -456,6 +523,9 @@ const ProjectBudgetStatus = () => {
                 Start Date:{" "}
                 <span className="text-gray-700">
                   {formatDate(selectedPlan.projStartDt)}
+                  {/* {formatDate(selectedPlan.projStartDt)} */}
+                  {/* {safeFormatDate(selectedPlan.projStartDt)} */}
+                  {/* {safeFormatDate(selectedPlan.projStartDt)} */}
                 </span>{" "}
                 |{/* <div> */}
                 {/* <span className="font-semibold text-green-800"> */}
@@ -463,6 +533,8 @@ const ProjectBudgetStatus = () => {
                 {/* </span>{" "} */}
                 <span className="text-gray-700">
                   {formatDate(selectedPlan.projEndDt)}
+                  {/* {safeFormatDate(selectedPlan.projEndDt)} */}
+                  {/* {safeFormatDate(selectedPlan.projEndDt)} */}
                 </span>
               </div>
               {/* </div> */}
