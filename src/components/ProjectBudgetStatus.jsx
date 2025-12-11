@@ -469,7 +469,7 @@ const ProjectBudgetStatus = () => {
           <div className="relative w-full sm:w-64">
             <input
               type="text"
-              className="border border-gray-300 rounded px-2 py-1 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              className="border border-gray-300 rounded px-2 py-1 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-white"
               value={searchTerm}
               onChange={handleInputChange}
               onKeyDown={handleKeyPress}
