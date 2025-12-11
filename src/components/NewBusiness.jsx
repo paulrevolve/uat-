@@ -779,6 +779,7 @@ const NewBusiness = ({ onClose, onSaveSuccess }) => {
   // };
 
   const handleSave = async () => {
+    setIsUpdateMode(true);
     if (
       !form.businessBudgetId ||
       !form.description ||
@@ -857,7 +858,7 @@ const NewBusiness = ({ onClose, onSaveSuccess }) => {
             },
           }
         );
-        toast.success("Budget details updated successfully!");
+        // toast.success("Budget details updated successfully!");
       } else {
         // Sequential API calls for new business creation
         // First call: AddNewBusiness
@@ -888,11 +889,11 @@ const NewBusiness = ({ onClose, onSaveSuccess }) => {
           }
         );
         console.log("AddProjectPlan API response:", response.data);
-        toast.success("Budget details saved successfully!");
+        // toast.success("Budget details saved successfully!");
       }
 
       // Reset form and mode for next operation
-      setIsUpdateMode(false);
+      // setIsUpdateMode(false);
       setForm({
         businessBudgetId: "",
         description: "",
@@ -916,16 +917,19 @@ const NewBusiness = ({ onClose, onSaveSuccess }) => {
         await onSaveSuccess(response.data); // Pass the saved data to parent
       }
 
+        toast.success("Budget details saved successfully!");
+setIsUpdateMode(false)
       // REMOVED: Don't fetch data or redirect to table view
       // Just close the modal/component and let user navigate to search manually
       onClose(); // Close the NewBusiness component
     } catch (error) {
       console.error("Error saving/updating form data:", error);
       const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
+        // error.response?.data?.message ||
+        // error.message ||
         "Failed to save/update budget details. ID exits or check all fields.";
       toast.error(`Error: ${errorMessage}`);
+      setIsUpdateMode(false)
     }
   };
 
@@ -1055,9 +1059,13 @@ const NewBusiness = ({ onClose, onSaveSuccess }) => {
               <button
                 type="button"
                 onClick={handleSave}
-                className="bg-blue-600 text-white px-3 py-1 rounded text-[11px] sm:text-xs hover:bg-blue-700 transition cursor-pointer"
+                className="bg-blue-600 text-white px-3 py-1 rounded text-[11px] sm:text-xs hover:bg-blue-700 transition cursor-pointer  disabled:bg-gray-300
+  disabled:text-gray-500
+  disabled:cursor-not-allowed
+  disabled:hover:bg-gray-300"
+                disabled={isUpdateMode}
               >
-                {isUpdateMode ? "Update" : "Save"}
+                {isUpdateMode ? "Saving" : "Save"}
               </button>
               <button
                 type="button"
