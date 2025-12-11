@@ -1001,12 +1001,12 @@ const ProspectiveIDSetup = () => {
 
   // --- Save All Data ---
 
-  const handleSaveAll = () => {
-    toast.success("All data saved (console logged)!");
-    // console.log("Employee Data:", employeeData);
-    // console.log("Vendor Data:", vendorData);
-    // console.log("PLC Data:", plcData);
-  };
+  // const handleSaveAll = () => {
+  //   toast.success("All data saved (console logged)!");
+  //   // console.log("Employee Data:", employeeData);
+  //   // console.log("Vendor Data:", vendorData);
+  //   // console.log("PLC Data:", plcData);
+  // };
 
   // Persist to localStorage on change
   useEffect(() => {
@@ -1034,7 +1034,7 @@ const ProspectiveIDSetup = () => {
 
           {/* Tabs */}
           <div className="flex border-b border-gray-200 mb-6">
-            {["employee", "vendor", "plc"].map((tab) => (
+            {["employee", "vendor", "PLC"].map((tab) => (
               <button
                 key={tab}
                 className={cn(
@@ -1157,12 +1157,12 @@ const ProspectiveIDSetup = () => {
                   <h3 className="text-xl font-semibold text-gray-800">
                     All Employees
                   </h3>
-                  <button
+                  {/* <button
                     onClick={handleSaveAll}
                     className="bg-blue-600 text-white font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-xs py-2 px-4 shadow-sm hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Save All
-                  </button>
+                  </button> */}
                 </div>
 
                 <div className="overflow-x-auto rounded-lg border border-gray-300">
@@ -1362,12 +1362,12 @@ const ProspectiveIDSetup = () => {
                   <h3 className="text-xl font-semibold text-gray-800">
                     All Vendors
                   </h3>
-                  <button
+                  {/* <button
                     onClick={handleSaveAll}
                     className="bg-blue-600 text-white font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-xs py-2 px-4 shadow-sm hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Save All
-                  </button>
+                  </button> */}
                 </div>
                 <div className="overflow-x-auto rounded-lg border border-gray-300">
                   <table className="min-w-full divide-y divide-gray-300">
@@ -1466,7 +1466,7 @@ const ProspectiveIDSetup = () => {
             )}
 
             {/* PLC Tab */}
-            {activeTab === "plc" && (
+            {activeTab === "PLC" && (
               <div className="space-y-6">
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">
                   PLC Data Entry
@@ -1518,12 +1518,12 @@ const ProspectiveIDSetup = () => {
                   <h3 className="text-xl font-semibold text-gray-800">
                     All PLCs
                   </h3>
-                  <button
+                  {/* <button
                     onClick={handleSaveAll}
                     className="bg-blue-600 text-white font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-xs py-2 px-4 shadow-sm hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Save All
-                  </button>
+                  </button> */}
                 </div>
                 <div className="overflow-x-auto rounded-lg border border-gray-300">
                   <table className="min-w-full divide-y divide-gray-300">
