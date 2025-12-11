@@ -292,17 +292,36 @@ const Rates = () => {
   //   periodDetails: [{ period: 1, rate: 15.8924, allocationAmt: 0, budgetAmt: 0 }, ...]
   // }
   const mapApiData = (apiData) =>
-    apiData.map((row) => ({
+  apiData.map((row) => {
+    const rawName = row.poolName || "";
+    const key = rawName.toString().toUpperCase(); // normalize
+    return {
       poolNumber: row.poolNo,
-      poolName: row.poolName,
+      poolName: poolDisplayNames[key] || rawName, // fallback to backend value
       months: monthsHeader.map((_, idx) => {
         const period = idx + 1;
         const p = row.periodDetails?.find((x) => x.period === period) || {};
         return {
-          rate: p.rate ?? ""
+          rate: p.rate ?? "",
+          // allocationAmt: p.allocationAmt ?? 0,
+          // budgetAmt: p.budgetAmt ?? 0,
         };
-      })
-    }));
+      }),
+    };
+  });
+
+  // const mapApiData = (apiData) =>
+  //   apiData.map((row) => ({
+  //     poolNumber: row.poolNo,
+  //     poolName: row.poolName,
+  //     months: monthsHeader.map((_, idx) => {
+  //       const period = idx + 1;
+  //       const p = row.periodDetails?.find((x) => x.period === period) || {};
+  //       return {
+  //         rate: p.rate ?? ""
+  //       };
+  //     })
+  //   }));
 
   const fetchData = async (year) => {
     try {
@@ -341,6 +360,15 @@ const Rates = () => {
           minimumFractionDigits: 4,
           maximumFractionDigits: 4
         });
+
+const poolDisplayNames = {
+  FRINGE: "Fringe Benefits",
+  HR: "Human Resources",
+  OVERHEAD: "Overhead",
+  MNH: "Mat & Handling",
+  GNA: "General & Admin",
+};  
+
 
   if (loading) {
     return <div className="flex items-center justify-center py-4">

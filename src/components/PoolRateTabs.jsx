@@ -18,8 +18,8 @@ const PoolRateTabs = () => {
     { id: "Fringe", label: "Fringe" },
     { id: "HR", label: "HR" },
     { id: "Overhead", label: "Overhead" },
-    { id: "MH", label: "M&H" },
-    { id: "GNA", label: "GNA" },
+    { id: "M&H", label: "M&H" },
+    { id: "G&A", label: "G&A" },
   ];
 
   const renderTabContent = () => {
@@ -32,9 +32,9 @@ const PoolRateTabs = () => {
         return <HR />;
       case "Overhead":
         return <Overhead />;
-      case "MH":
+      case "M&H":
         return <MH />;
-      case "GNA":
+      case "G&A":
         return <GNA />;
       case "Rate":
         return <Rates />;

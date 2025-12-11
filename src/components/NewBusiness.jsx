@@ -916,7 +916,6 @@ const NewBusiness = ({ onClose, onSaveSuccess }) => {
       if (onSaveSuccess) {
         await onSaveSuccess(response.data); // Pass the saved data to parent
       }
-
         toast.success("Budget details saved successfully!");
 setIsUpdateMode(false)
       // REMOVED: Don't fetch data or redirect to table view
