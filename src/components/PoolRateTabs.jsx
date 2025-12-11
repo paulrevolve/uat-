@@ -13,7 +13,7 @@ const PoolRateTabs = () => {
   const [activeTab, setActiveTab] = useState("Rates");
 
   const tabs = [
-    // { id: "Rate Configure", label: "Rate Configure" },
+    { id: "Rate Configure", label: "Rate Configure" },
     { id: "Rate", label: "Rate" },
     { id: "Fringe", label: "Fringe" },
     { id: "HR", label: "HR" },
@@ -24,8 +24,8 @@ const PoolRateTabs = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      // case "Rate Configure":
-      //   return <PoolRate />;
+      case "Rate Configure":
+        return <PoolRate />;
       case "Fringe":
         return <Fringe />;
       case "HR":
