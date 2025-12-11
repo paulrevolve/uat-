@@ -779,7 +779,7 @@ const NewBusiness = ({ onClose, onSaveSuccess }) => {
   // };
 
   const handleSave = async () => {
-    setIsUpdateMode(true);
+    
     if (
       !form.businessBudgetId ||
       !form.description ||
@@ -803,6 +803,8 @@ const NewBusiness = ({ onClose, onSaveSuccess }) => {
         return;
       }
     }
+
+    
 
     // First API call payload for /AddNewBusiness
     const businessPayload = {
@@ -846,7 +848,9 @@ const NewBusiness = ({ onClose, onSaveSuccess }) => {
     };
 
     try {
+      
       let response;
+    
       if (isUpdateMode) {
         // For update mode
         response = await axios.put(
