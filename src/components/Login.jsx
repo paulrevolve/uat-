@@ -50,6 +50,7 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { backendUrl } from "./config";
+import logo from "../assets/logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -190,7 +191,7 @@ return (
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <img
-            src="./src/assets/logo.png"   // put your logo path here
+            src={logo}   // put your logo path here
             alt="Sumaria Systems"
             className="h-20 w-60"
           />
