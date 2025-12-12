@@ -314,70 +314,272 @@ const ProjectPlanTable = ({
     );
   };
 
-  const refreshPlans = async () => {
-    if (!projectId) {
-      setPlans([]);
-      setFilteredPlans([]);
-      return;
-    }
+  // const refreshPlans = async () => {
+  //   if (!projectId) {
+  //     setPlans([]);
+  //     setFilteredPlans([]);
+  //     return;
+  //   }
 
-    try {
-      const response = await axios.get(
-        `${backendUrl}/Project/GetProjectPlans/${projectId}`
-      );
+  //   try {
+  //     const response = await axios.get(
+  //       `${backendUrl}/Project/GetProjectPlans/${projectId}`
+  //     );
 
-      const transformedPlans = response.data.map((plan) => ({
-        plId: plan.plId || plan.id || 0,
-        projId:
-        plan.fullProjectId ||
-          plan.projId ||
+  //     const transformedPlans = response.data.map((plan) => ({
+  //       plId: plan.plId || plan.id || 0,
+  //       projId:
+  //       plan.fullProjectId ||
+  //         plan.projId ||
           
-          plan.project_id ||
-          plan.projectId ||
-          projectId,
-        projName: plan.projName || "",
-        plType:
-          plan.plType === "Budget"
-            ? "BUD"
-            : plan.plType === "EAC"
-            ? "EAC"
-            : plan.plType || "",
-        source: plan.source || "",
-        version: plan.version || 0,
-        versionCode: plan.versionCode || "",
-        finalVersion: !!plan.finalVersion,
-        isCompleted: !!plan.isCompleted,
-        isApproved: !!plan.isApproved,
-        status:
-          plan.plType && plan.version
-            ? (plan.status || "In Progress")
-                .replace("Working", "In Progress")
-                .replace("Completed", "Submitted")
-            : "",
-        closedPeriod: plan.closedPeriod || "",
-        createdAt: plan.createdAt || "",
-        updatedAt: plan.updatedAt || "",
-        modifiedBy: plan.modifiedBy || "",
-        approvedBy: plan.approvedBy || "",
-        createdBy: plan.createdBy || "",
-        templateId: plan.templateId || 0,
-        projStartDt: plan.projStartDt || "",
-        projEndDt: plan.projEndDt || "",
-        orgId: plan.orgId || "",
-        fundedCost: plan.proj_f_cst_amt || "",
-        fundedFee: plan.proj_f_fee_amt || "",
-        fundedRev: plan.proj_f_tot_amt || "",
-        revenueAccount: plan.revenueAccount || "",
-      }));
+  //         plan.project_id ||
+  //         plan.projectId ||
+  //         projectId,
+  //       projName: plan.projName || "",
+  //       plType:
+  //         plan.plType === "Budget"
+  //           ? "BUD"
+  //           : plan.plType === "EAC"
+  //           ? "EAC"
+  //           : plan.plType || "",
+  //       source: plan.source || "",
+  //       version: plan.version || 0,
+  //       versionCode: plan.versionCode || "",
+  //       finalVersion: !!plan.finalVersion,
+  //       isCompleted: !!plan.isCompleted,
+  //       isApproved: !!plan.isApproved,
+  //       status:
+  //         plan.plType && plan.version
+  //           ? (plan.status || "In Progress")
+  //               .replace("Working", "In Progress")
+  //               .replace("Completed", "Submitted")
+  //           : "",
+  //       closedPeriod: plan.closedPeriod || "",
+  //       createdAt: plan.createdAt || "",
+  //       updatedAt: plan.updatedAt || "",
+  //       modifiedBy: plan.modifiedBy || "",
+  //       approvedBy: plan.approvedBy || "",
+  //       createdBy: plan.createdBy || "",
+  //       templateId: plan.templateId || 0,
+  //       projStartDt: plan.projStartDt || "",
+  //       projEndDt: plan.projEndDt || "",
+  //       orgId: plan.orgId || "",
+  //       fundedCost: plan.proj_f_cst_amt || "",
+  //       fundedFee: plan.proj_f_fee_amt || "",
+  //       fundedRev: plan.proj_f_tot_amt || "",
+  //       revenueAccount: plan.revenueAccount || "",
+  //     }));
 
-      const sortedPlans = sortPlansByProjIdPlTypeVersion(transformedPlans);
-      setPlans(sortedPlans);
-      setFilteredPlans(sortedPlans);
-      return sortedPlans;
-    } catch (error) {
-      toast.error("Failed to refresh plans.");
-    }
-  };
+  //     const sortedPlans = sortPlansByProjIdPlTypeVersion(transformedPlans);
+  //     setPlans(sortedPlans);
+  //     setFilteredPlans(sortedPlans);
+  //     return sortedPlans;
+  //   } catch (error) {
+  //     toast.error("Failed to refresh plans.");
+  //   }
+  // };
+  
+  const refreshPlans = async () => {
+  if (!projectId) {
+    setPlans([]);
+    setFilteredPlans([]);
+    return;
+  }
+
+  try {
+    const response = await axios.get(
+      `${backendUrl}/Project/GetProjectPlans/${projectId}`
+    );
+
+    const transformedPlans = response.data.map((plan) => ({
+      plId: plan.plId || plan.id || 0,
+      projId:
+        plan.fullProjectId ||
+        plan.projId ||
+        plan.project_id ||
+        plan.projectId ||
+        projectId,
+      projName: plan.projName || "",
+      plType:
+        plan.plType === "Budget"
+          ? "BUD"
+          : plan.plType === "EAC"
+          ? "EAC"
+          : plan.plType || "",
+      source: plan.source || "",
+      version: plan.version || 0,
+      versionCode: plan.versionCode || "",
+      finalVersion: !!plan.finalVersion,
+      isCompleted: !!plan.isCompleted,
+      isApproved: !!plan.isApproved,
+      status:
+        plan.plType && plan.version
+          ? (plan.status || "In Progress")
+              .replace("Working", "In Progress")
+              .replace("Completed", "Submitted")
+          : "",
+      closedPeriod: plan.closedPeriod || "",
+      createdAt: plan.createdAt || "",
+      updatedAt: plan.updatedAt || "",
+      modifiedBy: plan.modifiedBy || "",
+      approvedBy: plan.approvedBy || "",
+      createdBy: plan.createdBy || "",
+      templateId: plan.templateId || 0,
+      projStartDt: plan.projStartDt || "",
+      projEndDt: plan.projEndDt || "",
+      orgId: plan.orgId || "",
+      fundedCost: plan.proj_f_cst_amt || "",
+      fundedFee: plan.proj_f_fee_amt || "",
+      fundedRev: plan.proj_f_tot_amt || "",
+      revenueAccount: plan.revenueAccount || "",
+    }));
+
+    const sortedPlans = sortPlansByProjIdPlTypeVersion(transformedPlans);
+    setPlans(sortedPlans);
+    setFilteredPlans(sortedPlans);
+    return sortedPlans;
+  } catch (error) {
+    toast.error("Failed to refresh plans.");
+  }
+};
+
+// Only used when projectId is empty but a row is selected.
+const refreshPlansForSelected = async () => {
+  if (!selectedPlan?.projId) return [];
+
+  try {
+    const response = await axios.get(
+      `${backendUrl}/Project/GetProjectPlans/${selectedPlan.projId}`
+    );
+
+    const transformedPlans = response.data.map((plan) => ({
+      plId: plan.plId || plan.id || 0,
+      projId:
+        plan.fullProjectId ||
+        plan.projId ||
+        plan.project_id ||
+        plan.projectId ||
+        selectedPlan.projId,
+      projName: plan.projName || "",
+      plType:
+        plan.plType === "Budget"
+          ? "BUD"
+          : plan.plType === "EAC"
+          ? "EAC"
+          : plan.plType || "",
+      source: plan.source || "",
+      version: plan.version || 0,
+      versionCode: plan.versionCode || "",
+      finalVersion: !!plan.finalVersion,
+      isCompleted: !!plan.isCompleted,
+      isApproved: !!plan.isApproved,
+      status:
+        plan.plType && plan.version
+          ? (plan.status || "In Progress")
+              .replace("Working", "In Progress")
+              .replace("Completed", "Submitted")
+          : "",
+      closedPeriod: plan.closedPeriod || "",
+      createdAt: plan.createdAt || "",
+      updatedAt: plan.updatedAt || "",
+      modifiedBy: plan.modifiedBy || "",
+      approvedBy: plan.approvedBy || "",
+      createdBy: plan.createdBy || "",
+      templateId: plan.templateId || 0,
+      projStartDt: plan.projStartDt || "",
+      projEndDt: plan.projEndDt || "",
+      orgId: plan.orgId || "",
+      fundedCost: plan.proj_f_cst_amt || "",
+      fundedFee: plan.proj_f_fee_amt || "",
+      fundedRev: plan.proj_f_tot_amt || "",
+      revenueAccount: plan.revenueAccount || "",
+    }));
+
+    const sortedPlans = sortPlansByProjIdPlTypeVersion(transformedPlans);
+    // Important: DO NOT overwrite the main table data when user is in “all projects” mode.
+    // Just return the plans for re‑selecting the row.
+    return sortedPlans;
+  } catch (error) {
+    toast.error("Failed to refresh plans.");
+    return [];
+  }
+};
+
+
+//   const refreshPlans = async () => {
+//   // If nothing is selected and no projectId, just clear
+//   if (!selectedPlan && !projectId) {
+//     setPlans([]);
+//     setFilteredPlans([]);
+//     return [];
+//   }
+
+//   // Prefer the projId of the selected row; fall back to projectId prop
+//   const targetProjId = selectedPlan?.projId || projectId;
+//   if (!targetProjId) {
+//     setPlans([]);
+//     setFilteredPlans([]);
+//     return [];
+//   }
+
+//   try {
+//     const response = await axios.get(
+//       `${backendUrl}/Project/GetProjectPlans/${targetProjId}`
+//     );
+
+//     const transformedPlans = response.data.map((plan) => ({
+//       plId: plan.plId || plan.id || 0,
+//       projId:
+//         plan.fullProjectId ||
+//         plan.projId ||
+//         plan.project_id ||
+//         plan.projectId ||
+//         targetProjId,
+//       projName: plan.projName || "",
+//       plType:
+//         plan.plType === "Budget"
+//           ? "BUD"
+//           : plan.plType === "EAC"
+//           ? "EAC"
+//           : plan.plType || "",
+//       source: plan.source || "",
+//       version: plan.version || 0,
+//       versionCode: plan.versionCode || "",
+//       finalVersion: !!plan.finalVersion,
+//       isCompleted: !!plan.isCompleted,
+//       isApproved: !!plan.isApproved,
+//       status:
+//         plan.plType && plan.version
+//           ? (plan.status || "In Progress")
+//               .replace("Working", "In Progress")
+//               .replace("Completed", "Submitted")
+//           : "",
+//       closedPeriod: plan.closedPeriod || "",
+//       createdAt: plan.createdAt || "",
+//       updatedAt: plan.updatedAt || "",
+//       modifiedBy: plan.modifiedBy || "",
+//       approvedBy: plan.approvedBy || "",
+//       createdBy: plan.createdBy || "",
+//       templateId: plan.templateId || 0,
+//       projStartDt: plan.projStartDt || "",
+//       projEndDt: plan.projEndDt || "",
+//       orgId: plan.orgId || "",
+//       fundedCost: plan.proj_f_cst_amt || "",
+//       fundedFee: plan.proj_f_fee_amt || "",
+//       fundedRev: plan.proj_f_tot_amt || "",
+//       revenueAccount: plan.revenueAccount || "",
+//     }));
+
+//     const sortedPlans = sortPlansByProjIdPlTypeVersion(transformedPlans);
+//     setPlans(sortedPlans);
+//     setFilteredPlans(sortedPlans);
+//     return sortedPlans;
+//   } catch (error) {
+//     toast.error("Failed to refresh plans.");
+//     return [];
+//   }
+// };
+
 
   const selectNewPlan = (newPlanId) => {
     const newPlan = plans.find(
@@ -461,37 +663,311 @@ const ProjectPlanTable = ({
   };
 
 
-  const handleDateCellChange = async (plId, dateColumn, value) => {
+//   const handleDateCellChange = async (plId, dateColumn, value) => {
+//   const dateType = dateColumn === 'projectStartDate' ? 'startDate' : 'endDate';
+//   const currentDates = editingDates[plId] || {};
+//   const newDates = { ...currentDates, [dateType]: value };
+  
+//   setEditingDates(prev => ({ ...prev, [plId]: newDates }));
+
+//   // Auto-save when both dates are filled AND it's the selected row
+//   if (newDates.startDate && newDates.endDate && selectedPlan?.plId === plId) {
+//     const payload = {
+//       projId: selectedPlan?.projId,
+//       // projId: fullProjectId.current || projectId,
+//       // plId: plId,  // Include plan ID for row-specific update
+//       projStartDt: newDates.startDate,
+//       projEndDt: newDates.endDate
+//     };
+    
+//     try {
+//       setIsActionLoading(true);
+//       await axios.put(`${backendUrl}/Project/UpdateDates`, payload);
+//       toast.success('Plan dates updated successfully!');
+//       await refreshPlans(); // Sync with backend
+//     } catch (err) {
+//       toast.error(`Update failed: ${err.response?.data?.message || err.message}`);
+//       // Revert on error
+//       setEditingDates(prev => ({ ...prev, [plId]: currentDates }));
+//     } finally {
+//       setIsActionLoading(false);
+//     }
+//   }
+// };
+
+const handleDateCellChange = async (plId, dateColumn, value) => {
   const dateType = dateColumn === 'projectStartDate' ? 'startDate' : 'endDate';
   const currentDates = editingDates[plId] || {};
   const newDates = { ...currentDates, [dateType]: value };
-  
+
   setEditingDates(prev => ({ ...prev, [plId]: newDates }));
 
-  // Auto-save when both dates are filled AND it's the selected row
-  if (newDates.startDate && newDates.endDate && selectedPlan?.plId === plId) {
+  const isFullDate = (v) =>
+    typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+  if (
+    selectedPlan?.plId === plId &&
+    isFullDate(newDates.startDate) &&
+    isFullDate(newDates.endDate)
+  ) {
     const payload = {
       projId: selectedPlan?.projId,
-      // projId: fullProjectId.current || projectId,
-      // plId: plId,  // Include plan ID for row-specific update
       projStartDt: newDates.startDate,
-      projEndDt: newDates.endDate
+      projEndDt: newDates.endDate,
     };
-    
+
     try {
       setIsActionLoading(true);
       await axios.put(`${backendUrl}/Project/UpdateDates`, payload);
       toast.success('Plan dates updated successfully!');
-      await refreshPlans(); // Sync with backend
+
+      const updatedPlans =
+        projectId?.trim()
+          ? await refreshPlans()
+          : await refreshPlansForSelected();
+
+      if (updatedPlans && updatedPlans.length > 0) {
+        // strictly match both plId and projId to avoid jumping to master row
+        let updatedPlan = updatedPlans.find(
+          p => p.plId === plId && p.projId === selectedPlan.projId
+        );
+
+        // if not found (edge case), fall back to selectedPlan so it stays where it was
+        if (!updatedPlan) {
+          updatedPlan = {
+            ...selectedPlan,
+            projStartDt: newDates.startDate,
+            projEndDt: newDates.endDate,
+          };
+        }
+
+        const finalPlan = {
+          ...updatedPlan,
+          projStartDt: newDates.startDate,
+          projEndDt: newDates.endDate,
+          startDate: newDates.startDate,
+          endDate: newDates.endDate,
+        };
+
+        handleRowClick(finalPlan, {
+          startDate: newDates.startDate,
+          endDate: newDates.endDate,
+        });
+      }
     } catch (err) {
       toast.error(`Update failed: ${err.response?.data?.message || err.message}`);
-      // Revert on error
       setEditingDates(prev => ({ ...prev, [plId]: currentDates }));
     } finally {
       setIsActionLoading(false);
     }
   }
 };
+
+// const handleDateCellChange = async (plId, dateColumn, value) => {
+//   const dateType = dateColumn === 'projectStartDate' ? 'startDate' : 'endDate';
+//   const currentDates = editingDates[plId] || {};
+//   const newDates = { ...currentDates, [dateType]: value };
+
+//   setEditingDates(prev => ({ ...prev, [plId]: newDates }));
+
+//   const isFullDate = (v) =>
+//     typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+//   if (
+//     selectedPlan?.plId === plId &&
+//     isFullDate(newDates.startDate) &&
+//     isFullDate(newDates.endDate)
+//   ) {
+//     const payload = {
+//       projId: selectedPlan?.projId,
+//       projStartDt: newDates.startDate,
+//       projEndDt: newDates.endDate,
+//     };
+
+//     try {
+//       setIsActionLoading(true);
+//       await axios.put(`${backendUrl}/Project/UpdateDates`, payload);
+//       toast.success('Plan dates updated successfully!');
+
+//       // Use normal refresh when user searched a project;
+//       // use fallback only when projectId is empty.
+//       const updatedPlans =
+//         projectId?.trim()
+//           ? await refreshPlans()
+//           : await refreshPlansForSelected();
+
+//       if (updatedPlans && updatedPlans.length > 0) {
+//         const updatedPlan = updatedPlans.find(p => p.plId === plId);
+//         if (updatedPlan) {
+//           const finalPlan = {
+//             ...updatedPlan,
+//             projStartDt: newDates.startDate,
+//             projEndDt: newDates.endDate,
+//             startDate: newDates.startDate,
+//             endDate: newDates.endDate,
+//           };
+//           handleRowClick(finalPlan, {
+//             startDate: newDates.startDate,
+//             endDate: newDates.endDate,
+//           });
+//         }
+//       }
+//     } catch (err) {
+//       toast.error(`Update failed: ${err.response?.data?.message || err.message}`);
+//       setEditingDates(prev => ({ ...prev, [plId]: currentDates }));
+//     } finally {
+//       setIsActionLoading(false);
+//     }
+//   }
+// };
+
+// const handleDateCellChange = async (plId, dateColumn, value) => {
+//   const dateType = dateColumn === 'projectStartDate' ? 'startDate' : 'endDate';
+//   const currentDates = editingDates[plId] || {};
+//   const newDates = { ...currentDates, [dateType]: value };
+
+//   setEditingDates(prev => ({ ...prev, [plId]: newDates }));
+
+//   const isFullDate = (v) =>
+//     typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+//   if (
+//     selectedPlan?.plId === plId &&
+//     isFullDate(newDates.startDate) &&
+//     isFullDate(newDates.endDate)
+//   ) {
+//     const payload = {
+//       projId: selectedPlan?.projId,
+//       projStartDt: newDates.startDate,
+//       projEndDt: newDates.endDate,
+//     };
+
+//     try {
+//       setIsActionLoading(true);
+//       await axios.put(`${backendUrl}/Project/UpdateDates`, payload);
+//       toast.success('Plan dates updated successfully!');
+
+//       const updatedPlans = await refreshPlans(); // now works even when projectId is empty
+//       if (updatedPlans && updatedPlans.length > 0) {
+//         const updatedPlan = updatedPlans.find(p => p.plId === plId);
+//         if (updatedPlan) {
+//           const finalPlan = {
+//             ...updatedPlan,
+//             projStartDt: newDates.startDate,
+//             projEndDt: newDates.endDate,
+//             startDate: newDates.startDate,
+//             endDate: newDates.endDate,
+//           };
+//           handleRowClick(finalPlan, {
+//             startDate: newDates.startDate,
+//             endDate: newDates.endDate,
+//           });
+//         }
+//       }
+//     } catch (err) {
+//       toast.error(`Update failed: ${err.response?.data?.message || err.message}`);
+//       setEditingDates(prev => ({ ...prev, [plId]: currentDates }));
+//     } finally {
+//       setIsActionLoading(false);
+//     }
+//   }
+// };
+
+
+// const handleDateCellChange = async (plId, dateColumn, value) => {
+//   const dateType = dateColumn === 'projectStartDate' ? 'startDate' : 'endDate';
+//   const currentDates = editingDates[plId] || {};
+//   const newDates = { ...currentDates, [dateType]: value };
+  
+//   setEditingDates(prev => ({ ...prev, [plId]: newDates }));
+
+//   const isFullDate = (v) =>
+//     typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+//   if (
+//     selectedPlan?.plId === plId &&
+//     isFullDate(newDates.startDate) &&
+//     isFullDate(newDates.endDate)
+//   ) {
+//     const payload = {
+//       projId: selectedPlan?.projId,
+//       projStartDt: newDates.startDate,
+//       projEndDt: newDates.endDate,
+//     };
+
+//     try {
+//       setIsActionLoading(true);
+//       await axios.put(`${backendUrl}/Project/UpdateDates`, payload);
+//       toast.success('Plan dates updated successfully!');
+
+//       // 🔹 CRITICAL CHANGE: keep the same row selected even if projectId is empty
+//       const updatedPlans = await refreshPlans();   // refreshPlans already returns sortedPlans
+//       if (updatedPlans && updatedPlans.length > 0) {
+//         const updatedPlan = updatedPlans.find(p => p.plId === plId);
+//         if (updatedPlan) {
+//           // Make sure effective dates are also on startDate/endDate
+//           const finalPlan = {
+//             ...updatedPlan,
+//             projStartDt: newDates.startDate,
+//             projEndDt: newDates.endDate,
+//             startDate: newDates.startDate,
+//             endDate: newDates.endDate,
+//           };
+//           handleRowClick(finalPlan, {
+//             startDate: newDates.startDate,
+//             endDate: newDates.endDate,
+//           });
+//         }
+//       }
+//     } catch (err) {
+//       toast.error(`Update failed: ${err.response?.data?.message || err.message}`);
+//       setEditingDates(prev => ({ ...prev, [plId]: currentDates }));
+//     } finally {
+//       setIsActionLoading(false);
+//     }
+//   }
+// };
+
+
+// const handleDateCellChange = async (plId, dateColumn, value) => {
+//   const dateType = dateColumn === 'projectStartDate' ? 'startDate' : 'endDate';
+//   const currentDates = editingDates[plId] || {};
+//   const newDates = { ...currentDates, [dateType]: value };
+  
+//   setEditingDates(prev => ({ ...prev, [plId]: newDates }));
+
+//   // ✅ helper to ensure full yyyy-mm-dd date only
+//   const isFullDate = (v) =>
+//     typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+//   // ✅ Only when BOTH are valid full dates AND row is selected
+//   if (
+//     selectedPlan?.plId === plId &&
+//     isFullDate(newDates.startDate) &&
+//     isFullDate(newDates.endDate)
+//   ) {
+//     const payload = {
+//       projId: selectedPlan?.projId,
+//       projStartDt: newDates.startDate,
+//       projEndDt: newDates.endDate,
+//     };
+
+//     try {
+//       setIsActionLoading(true);
+//       await axios.put(`${backendUrl}/Project/UpdateDates`, payload);
+//       toast.success('Plan dates updated successfully!');
+//       await refreshPlans();
+//     } catch (err) {
+//       toast.error(`Update failed: ${err.response?.data?.message || err.message}`);
+//       setEditingDates(prev => ({ ...prev, [plId]: currentDates }));
+//     } finally {
+//       setIsActionLoading(false);
+//     }
+//   }
+// };
+
+
+
 
 
   const handleExportPlan = async (plan) => {
@@ -1938,33 +2414,30 @@ const handleDateChange = (dateType, value) => {
       value={
         editingDates[plan.plId]?.[
           col === 'projectStartDate' ? 'startDate' : 'endDate'
-        ] || 
-        (col === 'projectStartDate' 
-          ? (plan.projStartDt || plan.startDate) 
-          : (plan.projEndDt || plan.endDate)
-        )
+        ] ||
+        (col === 'projectStartDate'
+          ? (plan.projStartDt || plan.startDate)
+          : (plan.projEndDt || plan.endDate))
       }
-      onChange={(e) => handleDateCellChange(plan.plId, col, e.target.value)}
+      // IMPORTANT: remove onClick stopPropagation here
+      // onClick={(e) => e.stopPropagation()}
+      onChange={(e) => {
+        // explicitly keep this row as selected when typing in date
+        handleRowClick(plan);
+        handleDateCellChange(plan.plId, col, e.target.value);
+      }}
       className="border border-blue-300 rounded px-1 py-0.5 text-xs bg-yellow-50 focus:border-blue-500 w-full text-center"
-      onClick={(e) => e.stopPropagation()}
-      // onBlur={() => {
-      //   // Optional: Auto-save on blur if both dates exist
-      //   const rowDates = editingDates[plan.plId];
-      //   if (rowDates?.startDate && rowDates?.endDate) {
-      //     handleDateCellChange(plan.plId, col, rowDates[col === 'projectStartDate' ? 'startDate' : 'endDate']);
-      //   }
-      // }}
     />
   ) : (
     <span className="text-xs text-gray-700 text-center">
       {formatDateOnly(
-        col === 'projectStartDate' 
-          ? (plan.projStartDt || plan.startDate) 
+        col === 'projectStartDate'
+          ? (plan.projStartDt || plan.startDate)
           : (plan.projEndDt || plan.endDate)
       )}
     </span>
   )
-)  :  
+) :  
                           col === "versionCode" ? (
                             // <input
                             //   type="text"

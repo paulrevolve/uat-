@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { backendUrl } from './config';
+import React, { useState, useEffect } from "react";
+import { backendUrl } from "./config";
 
 const monthsHeader = [
   "Jan","Feb","Mar","Apr","May","Jun",
@@ -97,15 +97,15 @@ if (closing?.value) {
       orgId: row.orgId,
       acctId: row.acctId,
       accountName : row.accountName,
-      ytdActual: row.ytdActualAmt,
-      ytdBudget: row.ytdBudgetedAmt,
+      ytdActual: Number(row.ytdActualAmt) || 0,
+      ytdBudget: Number(row.ytdBudgetedAmt) || 0,
       months: monthsHeader.map((_, idx) => {
         const period = idx + 1;
         const p =
           row.periodDetails?.find((d) => d.period === period) || {};
         return {
-          actual: p.actualamt ?? "",
-          budget: p.budgetedAmt ?? "",
+          actual: Number(p.actualamt) || 0,
+          budget: Number(p.budgetedAmt) || 0,
         };
       }),
     }));
@@ -118,16 +118,16 @@ const mapBaseData = (rows) =>
     allocationOrgId: row.allocationOrgId,
     allocationAcctId: row.allocationAcctId,
     accountName: row.accountName,
-    ytdBase: row.ytdActualAmt,          // 22,111,491.57
-    ytdAllocation: row.ytdAllocationAmt, // 3,561,851.73
-    ytdBudget: row.ytdBudgetedAmt,      // 0
+    ytdBase: Number(row.ytdActualAmt) || 0,          // 22,111,491.57
+    ytdAllocation: Number(row.ytdAllocationAmt) || 0, // 3,561,851.73
+    ytdBudget: Number(row.ytdBudgetedAmt) || 0,      // 0
     months: monthsHeader.map((_, idx) => {
       const period = idx + 1;
       const p =
         row.periodDetails?.find((d) => d.period === period) || {};
       return {
-        base: p.baseAmt ?? 0,
-        allocation: p.allocationAmt ?? 0,
+        base: Number(p.baseAmt) || 0,
+        allocation: Number(p.allocationAmt) || 0,
       };
     }),
   }));
@@ -143,12 +143,16 @@ const mapBaseData = (rows) =>
     (sum, r) => sum + (Number(r.ytdBudget) || 0),
     0
   );
-  const monthTotals = monthsHeader.map((_, idx) =>
-    rows.reduce(
-      (sum, r) => sum + (Number(r.months[idx]?.actual) || 0),
-      0
-    )
-  );
+  const monthTotals = monthsHeader.map((_, idx) => {
+    const period = idx + 1;
+    const closed = isPeriodClosed(period, selectedYear);
+    return rows.reduce((sum, r) => {
+      const val = closed
+        ? Number(r.months[idx]?.actual) || 0
+        : Number(r.months[idx]?.budget) || 0;
+      return sum + val;
+    }, 0);
+  });
 
   return { totalYTDCostActualAmt, monthTotals ,totalYTDCostBudgetAmt};
 };
@@ -195,7 +199,7 @@ const calcBaseTotals = (rows) => {
         setError(null);
 
         const res = await fetch(
-            `${backendUrl}/Orgnization/GetHR?fycd=${selectedYear}&type=MNH`
+            `${backendUrl}/Orgnization/GetHR?fycd=${selectedYear}&type=MH`
         );
         if (!res.ok) throw new Error("Failed to fetch data");
 
@@ -228,6 +232,11 @@ setRate(json.rate ?? 0);
     fetchData(selectedYear);
     // recompute totals after escPercent fetched
   }, [selectedYear]);
+
+  // Recompute cost totals whenever cost data, selected year, or close period changes
+  useEffect(() => {
+    setCostTotals(calcCostTotals(costData));
+  }, [costData, selectedYear, closePeriodMonth, closePeriodYear]);
 
   const formatNumber = (n) =>
     n === null || n === undefined || n === ""
@@ -268,7 +277,7 @@ value={
     <select
       className="border border-gray-300 rounded px-2 py-1 text-sm"
       value={selectedYear}
-      onChange={(e) => setSelectedYear(e.target.value)}
+      onChange={(e) => setSelectedYear(Number(e.target.value))}
     >
       {Array.from({ length: 5 }).map((_, i) => {
         const y = new Date().getFullYear() - 2 + i;
@@ -301,7 +310,7 @@ value={
           <table className="table w-full">
             <thead className="thead bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-20 border-b-2 border-gray-200">
               <tr>
-                    <th className=" th-thead border border-gray-200 font-semibold text-gray-900 cursor-pointer" rowSpan={2}  onClick={() =>
+                <th className=" th-thead border border-gray-200 font-semibold text-gray-900 cursor-pointer" rowSpan={2}  onClick={() =>
     setCostSortDir((prev) => (prev === "asc" ? "desc" : "asc"))
   }>
                   Account Id {costSortDir === "asc" ? "▲" : "▼"}
@@ -414,7 +423,7 @@ value={
   <table className="table w-full">
     <thead className="thead">
       <tr>
-         <th className="th-thead border border-gray-200 font-semibold text-gray-900 cursor-pointer" rowSpan={2}  onClick={() =>
+        <th className="th-thead border border-gray-200 font-semibold text-gray-900 cursor-pointer" rowSpan={2}  onClick={() =>
     setBaseSortDir((prev) => (prev === "asc" ? "desc" : "asc"))
   }>
           Account Id {baseSortDir === "asc" ? "▲" : "▼"}
