@@ -22,7 +22,7 @@ const COLUMN_LABELS = {
   status: "Status",
   closedPeriod: "Closed Period",
   projectStartDate: "Project Start Date",
-  projectEndDate: "Project End Date",
+  projectEndDate: "Project End Date",
   createdAt: "Created At",
   updatedAt: "Updated At",
 };
@@ -52,19 +52,24 @@ const ProjectPlanTable = ({
   const [editingVersionCodeValue, setEditingVersionCodeValue] = useState("");
   const [budEacFilter, setBudEacFilter] = useState(false);
   const [showNewBusinessPopup, setShowNewBusinessPopup] = useState(false);
+  const [editingDates, setEditingDates] = useState({}); // { plId: { startDate, endDate } }
 
-  // 1. ✅ ADDED STATE: Stores the manual dates if the fetched project lacks them
+
+  // Stores manual dates if fetched project lacks them
   const [manualProjectDates, setManualProjectDates] = useState({
     startDate: "",
     endDate: "",
   });
 
-  
+  const [manualDatesSubmitted, setManualDatesSubmitted] = useState(false);
 
-  // Add a ref to track the last fetched project ID to prevent unnecessary API calls
+
+  // Track last fetched project ID and full ID
   const lastFetchedProjectId = useRef(null);
-  // Add a ref to store the original full project ID for actions
   const fullProjectId = useRef(null);
+
+  // Ref mirror of manual dates (used for non-reactive flows)
+  const tempManualDatesRef = useRef({ startDate: "", endDate: "" });
 
   const isParentProject = (projId) => {
     return projId && typeof projId === "string" && !projId.includes(".");
@@ -93,62 +98,23 @@ const ProjectPlanTable = ({
     }
   };
 
-  // const formatDateOnly = (value) => {
-  //   if (!value) return "";
-  //   // Parse the date string as UTC to avoid timezone offset issues
-  //   const dateString = value.includes("T") ? value.split("T")[0] : value;
-  //   const [year, month, day] = dateString.split("-");
-  //   return `${month}/${day}/${year}`; // Changed to MM/DD/YYYY format
-  // };
- 
- 
-//   const formatDateOnly = (value) => {
-//     if (!value) return "";
-//     // Use UTC parsing to prevent local timezone shifting the date backward by one day.
-//     try {
-//         // Handle YYYY-MM-DD format (like from date picker)
-//         if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-//             const [year, month, day] = value.split('-');
-//             return `${month}/${day}/${year}`; // MM/DD/YYYY format
-//         }
-//         // Fallback for ISO/other formats, try to format as UTC date string to avoid timezone shift
-//         const date = new Date(value);
-//         if (isNaN(date.getTime())) return value;
-        
-//         // Use custom formatting to ensure MM/DD/YYYY based on the UTC date
-//         const y = date.getUTCFullYear();
-//         const m = date.getUTCMonth() + 1;
-//         const d = date.getUTCDate();
-//         return `${m < 10 ? '0' + m : m}/${d < 10 ? '0' + d : d}/${y}`;
-
-//     } catch (e) {
-//         return value;
-//     }
-//   };
-  
   const formatDateOnly = (value) => {
-  if (!value) return "";
-  // Check for YYYY-MM-DD format (used by date picker)
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      const [year, month, day] = value.split('-');
-      return `${month}/${day}/${year}`; // MM/DD/YYYY format
-  }
-  // Standard ISO/other format parsing fallback
-  try {
+    if (!value) return "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [year, month, day] = value.split("-");
+      return `${month}/${day}/${year}`;
+    }
+    try {
       const date = new Date(value);
       if (isNaN(date.getTime())) return value;
-      
-      // Use UTC getter methods to prevent local timezone shift
       const y = date.getUTCFullYear();
-      const m = date.getUTCMonth() + 1; // Month is 0-indexed
+      const m = date.getUTCMonth() + 1;
       const d = date.getUTCDate();
-      
-      // Format as MM/DD/YYYY
-      return `${m < 10 ? '0' + m : m}/${d < 10 ? '0' + d : d}/${y}`;
-  } catch (e) {
+      return `${m < 10 ? "0" + m : m}/${d < 10 ? "0" + d : d}/${y}`;
+    } catch (e) {
       return value;
-  }
-};
+    }
+  };
 
   const sortPlansByProjIdPlTypeVersion = (plansArray) => {
     return [...plansArray].sort((a, b) => {
@@ -156,13 +122,11 @@ const ProjectPlanTable = ({
       if (a.projId > b.projId) return 1;
       if (a.plType < b.plType) return -1;
       if (a.plType > b.plType) return 1;
-      // Explicit numeric compare for version
       const aVersion = Number(a.version) || 0;
       const bVersion = Number(b.version) || 0;
       return aVersion - bVersion;
     });
   };
-  
 
   useEffect(() => {
     if (filteredProjects.length > 0) {
@@ -170,12 +134,14 @@ const ProjectPlanTable = ({
       const hasStartDate = project.startDate || project.projStartDt;
       const hasEndDate = project.endDate || project.projEndDt;
 
-      setManualProjectDates({
+      const initialDates = {
         startDate: hasStartDate || "",
         endDate: hasEndDate || "",
-      });
+      };
 
-      // Update columns to include date display if *any* project is loaded
+      setManualProjectDates(initialDates);
+      tempManualDatesRef.current = initialDates;
+
       setColumns([
         "projId",
         "projName",
@@ -191,44 +157,23 @@ const ProjectPlanTable = ({
         "projectStartDate",
         "projectEndDate",
       ]);
-
     } else {
-        // If search returns nothing, ensure columns are reset (or default initial state)
-        setColumns([
-            "projId",
-            "projName",
-            "plType",
-            "version",
-            "versionCode",
-            "source",
-            "isCompleted",
-            "isApproved",
-            "finalVersion",
-            "status",
-            "closedPeriod",
-        ]);
-        setManualProjectDates({ startDate: "", endDate: "" });
+      setColumns([
+        "projId",
+        "projName",
+        "plType",
+        "version",
+        "versionCode",
+        "source",
+        "isCompleted",
+        "isApproved",
+        "finalVersion",
+        "status",
+        "closedPeriod",
+      ]);
+      setManualProjectDates({ startDate: "", endDate: "" });
     }
   }, [filteredProjects, projectId]);
-  
-
-  // useEffect(() => {
-  //   setColumns([
-  //     "projId",
-  //     "projName",
-  //     "plType",
-  //     "version",
-  //     "versionCode",
-  //     "source",
-  //     "isCompleted",
-  //     "isApproved",
-  //     "finalVersion",
-  //     "status",
-  //     "closedPeriod",
-  //     "projectStartDate",
-  //     "projectEndDate",
-  //   ]);
-  // }, []);
 
   const fetchPlans = async () => {
     if (!searched && projectId.trim() === "") {
@@ -240,13 +185,11 @@ const ProjectPlanTable = ({
       return;
     }
 
-    // Prevent unnecessary API calls for the same project
     if (lastFetchedProjectId.current === projectId) {
       setLoading(false);
       return;
     }
 
-    // Store the full project ID for use in actions
     fullProjectId.current = projectId;
 
     setLoading(true);
@@ -255,13 +198,12 @@ const ProjectPlanTable = ({
         `${backendUrl}/Project/GetProjectPlans/${projectId}`
       );
 
-      //   console.log('API response:', response.data);
-
       const transformedPlans = response.data.map((plan, idx) => ({
         plId: plan.plId || plan.id || 0,
         projId:
-          plan.projId ||
           plan.fullProjectId ||
+          plan.projId ||
+          
           plan.project_id ||
           plan.projectId ||
           projectId,
@@ -300,7 +242,6 @@ const ProjectPlanTable = ({
         revenueAccount: plan.revenueAccount || "",
       }));
 
-      //   console.log(transformedPlans);
       const sortedPlans = sortPlansByProjIdPlTypeVersion(transformedPlans);
       setPlans(sortedPlans);
       setFilteredPlans(sortedPlans);
@@ -318,7 +259,6 @@ const ProjectPlanTable = ({
         "closedPeriod",
       ]);
 
-      // Update the last fetched project ID
       lastFetchedProjectId.current = projectId;
     } catch (error) {
       setPlans([]);
@@ -331,7 +271,6 @@ const ProjectPlanTable = ({
     }
   };
 
-  // Filter plans based on BUD/EAC checkbox
   useEffect(() => {
     if (budEacFilter) {
       const filtered = plans.filter(
@@ -343,9 +282,7 @@ const ProjectPlanTable = ({
     }
   }, [budEacFilter, plans]);
 
-  // Modified useEffect to only fetch when projectId actually changes
   useEffect(() => {
-    // Only fetch if projectId has actually changed
     if (projectId !== lastFetchedProjectId.current) {
       fetchPlans();
     }
@@ -368,12 +305,13 @@ const ProjectPlanTable = ({
     }
   }, [plans, selectedPlan, onPlanSelect]);
 
-  // Helper to get the current plan state from the plans array (always fresh, not from stale prop)
   const getCurrentPlan = () => {
     if (!selectedPlan) return null;
-    return plans.find(
-      (p) => p.plId === selectedPlan.plId && p.projId === selectedPlan.projId
-    ) || selectedPlan;
+    return (
+      plans.find(
+        (p) => p.plId === selectedPlan.plId && p.projId === selectedPlan.projId
+      ) || selectedPlan
+    );
   };
 
   const refreshPlans = async () => {
@@ -391,8 +329,9 @@ const ProjectPlanTable = ({
       const transformedPlans = response.data.map((plan) => ({
         plId: plan.plId || plan.id || 0,
         projId:
+        plan.fullProjectId ||
           plan.projId ||
-          plan.fullProjectId ||
+          
           plan.project_id ||
           plan.projectId ||
           projectId,
@@ -436,295 +375,124 @@ const ProjectPlanTable = ({
       setFilteredPlans(sortedPlans);
       return sortedPlans;
     } catch (error) {
-      // console.error('Error refreshing plans:', error);
       toast.error("Failed to refresh plans.");
     }
   };
 
   const selectNewPlan = (newPlanId) => {
-    // Find the newly created plan after refresh
     const newPlan = plans.find(
-        (p) => p.projId === newPlanId && p.plType === "NBBUD"
+      (p) => p.projId === newPlanId && p.plType === "NBBUD"
     );
     if (newPlan) {
-        // Use handleRowClick to select the new plan, ensuring dates are propagated
-        handleRowClick(newPlan);
+      handleRowClick(newPlan);
     } else {
-        // Fallback: If not found, deselect current plan
-        onPlanSelect(null);
+      onPlanSelect(null);
     }
+  };
+
+  const handleNewBusinessSave = async (savedData) => {
+    const newPlans = await refreshPlans();
+    const newPlanId = savedData.projId || savedData.businessBudgetId;
+
+    if (newPlanId && newPlans) {
+      const planToSelect = newPlans.find(
+        (p) => p.projId === newPlanId && p.plType === "NBBUD"
+      );
+      if (planToSelect) {
+        handleRowClick(planToSelect);
+        toast.success(`NB BUD plan for ${newPlanId} created and selected.`);
+      } else {
+        toast.error("Plan created, but auto-selection failed.");
+      }
+    }
+  };
+
+  const handleRowClick = (plan, tempDates = manualProjectDates) => {
+    const isDateMissing =
+      filteredProjects.length > 0 &&
+      !(filteredProjects[0].startDate || filteredProjects[0].projStartDt);
+
+    const effectiveStartDate =
+      tempDates?.startDate ||
+      (isDateMissing && manualProjectDates.startDate) ||
+      plan.projStartDt ||
+      plan.startDate ||
+      "";
+    const effectiveEndDate =
+      tempDates?.endDate ||
+      (isDateMissing && manualProjectDates.endDate) ||
+      plan.projEndDt ||
+      plan.endDate ||
+      "";
+
+    const updatedPlan = {
+      ...plan,
+      projStartDt: effectiveStartDate,
+      projEndDt: effectiveEndDate,
+      startDate: effectiveStartDate,
+      endDate: effectiveEndDate,
+    };
+
+     setEditingDates(prev => ({
+    ...prev,
+    [plan.plId]: {
+      startDate: plan.projStartDt || plan.startDate || '',
+      endDate: plan.projEndDt || plan.endDate || ''
+    }
+  }));
+
+    const isSamePlanButDatesChanged =
+      selectedPlan &&
+      selectedPlan.plId === updatedPlan.plId &&
+      selectedPlan.projId === updatedPlan.projId &&
+      (selectedPlan.projStartDt !== updatedPlan.projStartDt ||
+        selectedPlan.projEndDt !== updatedPlan.projEndDt);
+
+    if (
+      !selectedPlan ||
+      updatedPlan.plId !== selectedPlan.plId ||
+      updatedPlan.projId !== selectedPlan.projId ||
+      isSamePlanButDatesChanged
+    ) {
+      onPlanSelect(updatedPlan);
+    } else {
+      onPlanSelect(updatedPlan);
+    }
+  };
+
+
+  const handleDateCellChange = async (plId, dateColumn, value) => {
+  const dateType = dateColumn === 'projectStartDate' ? 'startDate' : 'endDate';
+  const currentDates = editingDates[plId] || {};
+  const newDates = { ...currentDates, [dateType]: value };
+  
+  setEditingDates(prev => ({ ...prev, [plId]: newDates }));
+
+  // Auto-save when both dates are filled AND it's the selected row
+  if (newDates.startDate && newDates.endDate && selectedPlan?.plId === plId) {
+    const payload = {
+      projId: selectedPlan?.projId,
+      // projId: fullProjectId.current || projectId,
+      // plId: plId,  // Include plan ID for row-specific update
+      projStartDt: newDates.startDate,
+      projEndDt: newDates.endDate
+    };
+    
+    try {
+      setIsActionLoading(true);
+      await axios.put(`${backendUrl}/Project/UpdateDates`, payload);
+      toast.success('Plan dates updated successfully!');
+      await refreshPlans(); // Sync with backend
+    } catch (err) {
+      toast.error(`Update failed: ${err.response?.data?.message || err.message}`);
+      // Revert on error
+      setEditingDates(prev => ({ ...prev, [plId]: currentDates }));
+    } finally {
+      setIsActionLoading(false);
+    }
+  }
 };
 
-  // const handleNewBusinessSave = async (savedData) => {
-  //   // Refresh the plans table to show the newly created project plan
-  //   await refreshPlans();
-  // };
-
-
-
-  // Updated handleRowClick to prevent any side effects that might trigger re-fetching
-
-
-  // const handleRowClick = (plan) => {
-  //   if (
-  //     !selectedPlan ||
-  //     selectedPlan.plId !== plan.plId ||
-  //     selectedPlan.projId !== plan.projId
-  //   ) {
-  //     onPlanSelect(plan);
-  //   }
-  // };
-
-//   const handleRowClick = (plan) => {
-//     
-//     // Determine the effective dates, prioritizing the manually set date if available.
-//     const effectiveStartDate = manualProjectDates.startDate || plan.projStartDt || plan.startDate || '';
-//     const effectiveEndDate = manualProjectDates.endDate || plan.projEndDt || plan.endDate || '';
-
-//     // Create a new plan object with the updated, effective dates
-//     const updatedPlan = { 
-//         ...plan, 
-//         // CRITICAL: Overwrite the date properties used by parent/children
-//         projStartDt: effectiveStartDate,
-//         projEndDt: effectiveEndDate,
-//         startDate: effectiveStartDate, 
-//         endDate: effectiveEndDate,     
-//     };
-
-//     // --- CRITICAL FIX START: Force re-selection if a row is selected AND manual dates are set ---
-//     // If the plan ID is the same, but we have valid dates set, we still want to force the update
-//     const isSamePlanButDatesChanged = 
-//       selectedPlan && 
-//       selectedPlan.plId === updatedPlan.plId &&
-//       selectedPlan.projId === updatedPlan.projId &&
-//       (selectedPlan.projStartDt !== updatedPlan.projStartDt || selectedPlan.projEndDt !== updatedPlan.projEndDt);
-
-//     if (
-//         !selectedPlan ||
-//         selectedPlan.plId !== updatedPlan.plId ||
-//         selectedPlan.projId !== updatedPlan.projId ||
-//         isSamePlanButDatesChanged // Force update if the plan is selected but dates just changed
-//     ) {
-//         onPlanSelect(updatedPlan); // Pass the plan with the *latest, corrected* project dates
-//     } else {
-//         // If the user clicks the currently selected row, update the dates anyway
-//         // This handles cases where dates are entered AFTER the row is first selected.
-//         onPlanSelect(updatedPlan);
-//     }
-//     // --- CRITICAL FIX END ---
-//   };
-
-const handleNewBusinessSave = async (savedData) => {
-    // 1. Refresh the plans table and get the newly fetched plans
-    const newPlans = await refreshPlans();
-    
-    // The projId of the created plan is the businessBudgetId from the NewBusiness form
-    const newPlanId = savedData.projId || savedData.businessBudgetId;
-    
-    // 2. Find and select the newly created plan from the fresh list
-    if (newPlanId) {
-        const planToSelect = newPlans.find(
-            (p) => p.projId === newPlanId && p.plType === "NBBUD"
-        );
-        if (planToSelect) {
-            // Select the row programmatically
-            handleRowClick(planToSelect); 
-            toast.success(`NB BUD plan for ${newPlanId} created and selected.`);
-        } else {
-            toast.error("Plan created, but auto-selection failed.");
-        }
-    }
-};
-  
-// const handleNewBusinessSave = async (savedData) => {
-//     // 1. Refresh the plans table to show the newly created project plan
-//     await refreshPlans();
-    
-//     // 2. Wait briefly for state update, then select the new plan
-//     const newPlanId = savedData.projId || savedData.businessBudgetId;
-    
-//     if (newPlanId) {
-//         // Use a small timeout to ensure the `plans` state in ProjectPlanTable has fully updated 
-//         // after the asynchronous `refreshPlans` call (which sets the state).
-//         setTimeout(() => {
-//             const planToSelect = plans.find(
-//                 (p) => p.projId === newPlanId && p.plType === "NBBUD"
-//             );
-//             if (planToSelect) {
-//                 handleRowClick(planToSelect);
-//             } else {
-//                 toast.error("New Business Plan was created but could not be automatically selected.");
-//             }
-//         }, 100); // 100ms delay to wait for state update cycle
-//     }
-// };
-
-
-const handleRowClick = (plan) => {
-    
-    // Determine the effective dates:
-    // 1. Use manual dates ONLY IF the original fetched data for the entire project was missing them.
-    // 2. Otherwise, rely solely on the plan's dates (from API).
-    // CRITICAL: This determines which date is used by the downstream components.
-    const effectiveStartDate = (isDateMissing && manualProjectDates.startDate) || plan.projStartDt || plan.startDate || '';
-    const effectiveEndDate = (isDateMissing && manualProjectDates.endDate) || plan.projEndDt || plan.endDate || '';
-
-    // Step 2: Create an updated plan object to pass UP to ProjectBudgetStatus.js
-    const updatedPlan = { 
-        ...plan, 
-        // CRITICAL: Overwrite the date properties used by parent/children
-        projStartDt: effectiveStartDate,
-        projEndDt: effectiveEndDate,
-        startDate: effectiveStartDate, 
-        endDate: effectiveEndDate,     
-    };
-
-    // Step 3: Check if selection should be forced (needed when dates are modified manually)
-    const isSamePlanButDatesChanged = 
-      selectedPlan && 
-      selectedPlan.plId === updatedPlan.plId &&
-      selectedPlan.projId === updatedPlan.projId &&
-      (selectedPlan.projStartDt !== updatedPlan.projStartDt || selectedPlan.projEndDt !== updatedPlan.projEndDt);
-
-    if (
-        !selectedPlan ||
-        updatedPlan.plId !== selectedPlan.plId ||
-        updatedPlan.projId !== selectedPlan.projId ||
-        isSamePlanButDatesChanged // Force update if the plan is selected but dates just changed
-    ) {
-        onPlanSelect(updatedPlan); 
-    } else {
-        onPlanSelect(updatedPlan);
-    }
-  };
-
-// const handleRowClick = (plan) => {
-//     
-//     // Step 1: Use manual dates if available, otherwise fallback to API dates.
-//     const effectiveStartDate = manualProjectDates.startDate || plan.projStartDt || plan.startDate || '';
-//     const effectiveEndDate = manualProjectDates.endDate || plan.projEndDt || plan.endDate || '';
-
-//     // Step 2: Create an updated plan object to pass UP to ProjectBudgetStatus.js
-//     const updatedPlan = { 
-//         ...plan, 
-//         // CRITICAL: Overwrite the date properties used by parent/children
-//         projStartDt: effectiveStartDate,
-//         projEndDt: effectiveEndDate,
-//         startDate: effectiveStartDate, 
-//         endDate: effectiveEndDate,     
-//     };
-
-//     // Step 3: Check if selection should be forced (needed when dates are modified manually)
-//     const isSamePlanButDatesChanged = 
-//       selectedPlan && 
-//       selectedPlan.plId === updatedPlan.plId &&
-//       selectedPlan.projId === updatedPlan.projId &&
-//       (selectedPlan.projStartDt !== updatedPlan.projStartDt || selectedPlan.projEndDt !== updatedPlan.projEndDt);
-
-//     if (
-//         !selectedPlan ||
-//         updatedPlan.plId !== selectedPlan.plId ||
-//         updatedPlan.projId !== selectedPlan.projId ||
-//         isSamePlanButDatesChanged // Force update if the plan is selected but dates just changed
-//     ) {
-//         onPlanSelect(updatedPlan); 
-//     } else {
-//         onPlanSelect(updatedPlan);
-//     }
-//   };
-  
-//   const handleRowClick = (plan) => {
-//     
-//     // Determine the effective dates, prioritizing the manually set date if available.
-//     const effectiveStartDate = manualProjectDates.startDate || plan.projStartDt || plan.startDate || '';
-//     const effectiveEndDate = manualProjectDates.endDate || plan.projEndDt || plan.endDate || '';
-
-//     // Create a new plan object with the updated, effective dates
-//     const updatedPlan = { 
-//         ...plan, 
-//         // CRITICAL: Overwrite the date properties used by parent/children
-//         projStartDt: effectiveStartDate,
-//         projEndDt: effectiveEndDate,
-//         startDate: effectiveStartDate, 
-//         endDate: effectiveEndDate,     
-//     };
-
-//     // --- CRITICAL FIX START: Force re-selection if a row is selected AND manual dates are set ---
-//     // If the plan ID is the same, but we have valid dates set, we still want to force the update
-//     const isSamePlanButDatesChanged = 
-//       selectedPlan && 
-//       selectedPlan.plId === updatedPlan.plId &&
-//       selectedPlan.projId === updatedPlan.projId &&
-//       (selectedPlan.projStartDt !== updatedPlan.projStartDt || selectedPlan.projEndDt !== updatedPlan.projEndDt);
-
-//     if (
-//         !selectedPlan ||
-//         updatedPlan.plId !== selectedPlan.plId ||
-//         updatedPlan.projId !== selectedPlan.projId ||
-//         isSamePlanButDatesChanged // Force update if the plan is selected but dates just changed
-//     ) {
-//         onPlanSelect(updatedPlan); // Pass the plan with the *latest, corrected* project dates
-//     } else {
-//         // If the user clicks the currently selected row, update the dates anyway
-//         // This handles cases where dates are entered AFTER the row is first selected.
-//         onPlanSelect(updatedPlan);
-//     }
-//     // --- CRITICAL FIX END ---
-//   };
-
-  // const handleRowClick = (plan) => {
-    
-  //   // Determine the effective dates, prioritizing the manually set date if available.
-  //   const effectiveStartDate = manualProjectDates.startDate || plan.projStartDt || plan.startDate || '';
-  //   const effectiveEndDate = manualProjectDates.endDate || plan.projEndDt || plan.endDate || '';
-
-  //   // Create a new plan object with the updated, effective dates
-  //   const updatedPlan = { 
-  //       ...plan, 
-  //       // Overwrite the date properties using the effective dates
-  //       projStartDt: effectiveStartDate,
-  //       projEndDt: effectiveEndDate,
-  //       startDate: effectiveStartDate, 
-  //       endDate: effectiveEndDate,     
-  //   };
-
-  //   // This simplified check restores click functionality
-  //   if (
-  //       !selectedPlan ||
-  //       selectedPlan.plId !== updatedPlan.plId ||
-  //       selectedPlan.projId !== updatedPlan.projId
-  //   ) {
-  //       onPlanSelect(updatedPlan); // Pass the plan with the *latest, corrected* project dates
-  //   }
-  // };
-  
-
-  // const handleRowClick = (plan) => {
-  //   // Determine the effective dates, prioritizing the manually set date if available/needed.
-  //   // We use the master dates stored in state, which are set via the manual input fields below.
-  //   const effectiveStartDate = manualProjectDates.startDate || plan.projStartDt || plan.startDate || '';
-  //   const effectiveEndDate = manualProjectDates.endDate || plan.projEndDt || plan.endDate || '';
-
-  //   const updatedPlan = {
-  //     ...plan,
-  //     // Pass the effective dates down to ensure Hours/Amounts components use them
-  //     projStartDt: effectiveStartDate,
-  //     projEndDt: effectiveEndDate,
-  //     startDate: effectiveStartDate, // For robustness
-  //     endDate: effectiveEndDate,     // For robustness
-  //   };
-
-  //   if (
-  //     !selectedPlan ||
-  //     selectedPlan.plId !== plan.plId ||
-  //     selectedPlan.projId !== plan.projId ||
-  //     // Check if effective dates differ from what's currently in selectedPlan
-  //     selectedPlan.projStartDt !== effectiveStartDate ||
-  //     selectedPlan.projEndDt !== effectiveEndDate
-  //   ) {
-  //     onPlanSelect(updatedPlan);
-  //   }
-  // };
 
   const handleExportPlan = async (plan) => {
     if (!selectedPlan?.projId || !plan.version || !plan.plType) {
@@ -748,13 +516,11 @@ const handleRowClick = (plan) => {
         }
       );
 
-      // Check if response is valid
       if (!response.data || response.data.size === 0) {
         toast.error("No data received from server");
         return;
       }
 
-      // Create blob with proper content type
       const blob = new Blob([response.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
@@ -771,7 +537,6 @@ const handleRowClick = (plan) => {
       document.body.appendChild(link);
       link.click();
 
-      // Cleanup
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
@@ -779,11 +544,7 @@ const handleRowClick = (plan) => {
 
       toast.success("Plan exported successfully!");
     } catch (err) {
-      // console.error("Export error:", err);
-
-      // Better error handling
       if (err.response) {
-        // Server responded with error status
         if (err.response.status === 404) {
           toast.error("Export endpoint not found or data not available");
         } else if (err.response.status === 500) {
@@ -794,10 +555,8 @@ const handleRowClick = (plan) => {
           );
         }
       } else if (err.request) {
-        // Network error
         toast.error("Network error: Unable to reach server");
       } else {
-        // Other error
         toast.error("Error exporting plan: " + err.message);
       }
     } finally {
@@ -871,6 +630,144 @@ const handleRowClick = (plan) => {
     }
   };
 
+  const handleUpdateProjectDates = async (newDates) => {
+    if (!projectId || !newDates.startDate || !newDates.endDate) {
+      toast.error("Project ID or both dates are missing for update.");
+      return false;
+    }
+    const payload = {
+      // projId: fullProjectId.current || projectId,
+      projId: selectedPlan?.projId,
+      projStartDt: newDates.startDate,
+      projEndDt: newDates.endDate,
+    };
+
+    setIsActionLoading(true);
+    try {
+      await axios.put(`${backendUrl}/Project/UpdateDates`, payload);
+      toast.success("Project dates updated successfully!");
+
+      setManualDatesSubmitted(true);
+
+
+      if (filteredProjects.length > 0) {
+        const projectIndex = filteredProjects.findIndex(
+          (p) => p.projId === projectId
+        );
+        if (projectIndex !== -1) {
+          filteredProjects[projectIndex].startDate = newDates.startDate;
+          filteredProjects[projectIndex].projStartDt = newDates.startDate;
+          filteredProjects[projectIndex].endDate = newDates.endDate;
+          filteredProjects[projectIndex].projEndDt = newDates.endDate;
+
+          // Keep manual dates so they stay visible
+          setManualProjectDates({
+            startDate: newDates.startDate,
+            endDate: newDates.endDate,
+          });
+          tempManualDatesRef.current = {
+            startDate: newDates.startDate,
+            endDate: newDates.endDate,
+          };
+
+          if (selectedPlan) {
+            handleRowClick(selectedPlan, newDates);
+          }
+        }
+      }
+      return true;
+    } catch (err) {
+      toast.error(
+        "Failed to update project dates. " +
+          (err.response?.data?.message || err.message)
+      );
+      return false;
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Date change: keep UI values until both are set, then call API
+  // const handleDateChange = (dateType, value) => {
+  //   const newDates = {
+  //     ...manualProjectDates,
+  //     [dateType]: value,
+  //   };
+
+  //   setManualProjectDates(newDates);
+  //   tempManualDatesRef.current = {
+  //     ...tempManualDatesRef.current,
+  //     [dateType]: value,
+  //   };
+
+  //   const shouldCallApi =
+  //     filteredProjects.length > 0 &&
+  //     !(filteredProjects[0].startDate || filteredProjects[0].projStartDt);
+
+  //   if (newDates.startDate && newDates.endDate && shouldCallApi) {
+  //     handleUpdateProjectDates(newDates);
+  //   }
+
+  //   if (selectedPlan) {
+  //     handleRowClick(selectedPlan, newDates);
+  //   }
+  // };
+
+//   const handleDateChange = (dateType, value) => {
+//   const newDates = {
+//     ...manualProjectDates,
+//     [dateType]: value,
+//   };
+
+//   // 1) Always keep them in state so UI never clears
+//   setManualProjectDates(newDates);
+//   tempManualDatesRef.current = {
+//     ...tempManualDatesRef.current,
+//     [dateType]: value,
+//   };
+
+//   // 2) Only call API when *both* dates present and backend has no dates
+//   const shouldCallApi =
+//     filteredProjects.length > 0 &&
+//     !(filteredProjects[0].startDate || filteredProjects[0].projStartDt);
+
+//   if (newDates.startDate && newDates.endDate && shouldCallApi) {
+//     handleUpdateProjectDates(newDates);
+//   }
+
+//   // 3) Keep selected row in sync so grid columns always show these dates
+//   if (selectedPlan) {
+//     handleRowClick(selectedPlan, newDates);
+//   }
+// };
+
+const handleDateChange = (dateType, value) => {
+  const newDates = {
+    ...manualProjectDates,
+    [dateType]: value,
+  };
+
+  setManualProjectDates(newDates);
+  tempManualDatesRef.current = {
+    ...tempManualDatesRef.current,
+    [dateType]: value,
+  };
+
+  const shouldCallApi =
+    filteredProjects.length > 0 &&
+    !(filteredProjects[0].startDate || filteredProjects[0].projStartDt);
+
+  if (newDates.startDate && newDates.endDate && shouldCallApi) {
+    handleUpdateProjectDates(newDates);
+  }
+
+  if (selectedPlan) {
+    handleRowClick(selectedPlan, newDates);
+  }
+};
+
+
+
   const handleCheckboxChange = async (idx, field) => {
     const prevPlans = [...plans];
     const plan = plans[idx];
@@ -917,7 +814,7 @@ const handleRowClick = (plan) => {
         (p) =>
           p.status === "In Progress" &&
           p.plType === updated.plType &&
-          p.projId === updated.projId // ADD THIS LINE
+          p.projId === updated.projId
       ).length;
       if (inProgressCount > 0 && updated.status === "In Progress") {
         toast.error(
@@ -941,7 +838,6 @@ const handleRowClick = (plan) => {
       newPlans = plans.map((p, i) => (i === idx ? updated : p));
     }
 
-    // "In Progress" handling for exclusivity
     if (updated.status === "In Progress") {
       newPlans = newPlans.map((p, i) =>
         i !== idx &&
@@ -964,7 +860,7 @@ const handleRowClick = (plan) => {
 
       const payload = {
         plId: updated.plId,
-        projId: updated.projId,
+        projId: fullProjectId.current || updated.projId,
         plType: updated.plType,
         versionCode: updated.versionCode,
         finalVersion: updated.finalVersion,
@@ -986,45 +882,14 @@ const handleRowClick = (plan) => {
       }
     }
   };
-  
-
-  //   const handleVersionCodeChange = async (idx, value) => {
-  //     const prevPlans = [...plans];
-  //     const planId = plans[idx].plId;
-  //     let updated = { ...plans[idx], versionCode: value };
-  //     const newPlans = plans.map((plan) =>
-  //       plan.plId === planId ? updated : plan
-  //     );
-  //     setPlans(newPlans);
-  //     if (planId && Number(planId) > 0) {
-  //       const updateUrl = `${backendUrl}/Project/UpdateProjectPlan`;
-  //       toast.info("Updating version code...", { toastId: "version-code-info" });
-  //       try {
-  //         setIsActionLoading(true);
-  //         await axios.put(updateUrl, updated);
-  //       } catch (err) {
-  //         setPlans(prevPlans);
-  //         toast.error(
-  //           "Error updating version code: " +
-  //             (err.response?.data?.message || err.message),
-  //           { toastId: "version-code-error" }
-  //         );
-  //       } finally {
-  //         setIsActionLoading(false);
-  //       }
-  //     }
-  //   };
-
-  // FIXED: Updated handleActionSelect to use the full project ID
 
   // const handleVersionCodeChange = async (idx, value) => {
   //   const prevPlans = [...plans];
   //   const currentPlan = plans[idx];
   //   const planId = currentPlan.plId;
 
-  //   // Check if value actually changed
   //   if (currentPlan.versionCode === value) {
-  //     return; // No change, don't call API
+  //     return;
   //   }
 
   //   let updated = { ...currentPlan, versionCode: value };
@@ -1054,7 +919,45 @@ const handleRowClick = (plan) => {
   //     }
   //   }
   // };
-    const handleVersionCodeChange = async (plId, value) => {
+  
+  //   const handleVersionCodeChange = async (plId, value) => {
+  //   const prevPlans = [...plans];
+  //   const currentPlan = plans.find(p => p.plId === plId);
+  //   if (!currentPlan) return;
+ 
+  //   if (currentPlan.versionCode === value) {
+  //     return;
+  //   }
+ 
+  //   let updated = { ...currentPlan, versionCode: value };
+  //   const newPlans = plans.map((plan) =>
+  //     plan.plId === plId ? updated : plan
+  //   );
+  //   setPlans(newPlans);
+ 
+  //   if (plId && Number(plId) > 0) {
+  //     const updateUrl = `${backendUrl}/Project/UpdateProjectPlan`;
+  //     toast.info("Updating version code...", { toastId: "version-code-info" });
+  //     try {
+  //       setIsActionLoading(true);
+  //       await axios.put(updateUrl, updated);
+  //       toast.success("Version code updated successfully!", {
+  //         toastId: "version-code-success",
+  //       });
+  //     } catch (err) {
+  //       setPlans(prevPlans);
+  //       toast.error(
+  //         "Error updating version code: " +
+  //           (err.response?.data?.message || err.message),
+  //         { toastId: "version-code-error" }
+  //       );
+  //     } finally {
+  //       setIsActionLoading(false);
+  //     }
+  //   }
+  // };
+
+   const handleVersionCodeChange = async (plId, value) => {
     const prevPlans = [...plans];
     const currentPlan = plans.find(p => p.plId === plId);
     if (!currentPlan) return;
@@ -1091,1126 +994,228 @@ const handleRowClick = (plan) => {
     }
   };
 
-  // const handleActionSelect = async (idx, action) => {
-  //   const plan = plans[idx];
 
-  //   // console.log('Selected plan object:', plan);
-  //   // console.log('Full project ID from ref:', fullProjectId.current);
-
-  //   if (action === "None") return;
-  //   try {
-  //     setIsActionLoading(true);
-  //     if (action === "Delete") {
-  //       if (!plan.plId || Number(plan.plId) <= 0) {
-  //         toast.error("Cannot delete: Invalid plan ID.");
-  //         setIsActionLoading(false);
-  //         return;
-  //       }
-  //       const confirmed = window.confirm(
-  //         `Are you sure you want to delete this plan`
-  //       );
-  //       if (!confirmed) {
-  //         setIsActionLoading(false);
-  //         return;
-  //       }
-  //       toast.info("Deleting plan...");
-  //       try {
-  //         await axios.delete(
-  //           `${backendUrl}/Project/DeleteProjectPlan/${plan.plId}`
-  //         );
-  //         toast.success("Plan deleted successfully!");
-  //       } catch (err) {
-  //         if (err.response && err.response.status === 404) {
-  //           toast.error(
-  //             "Plan not found on server. It may have already been deleted."
-  //           );
-  //         } else {
-  //           toast.error(
-  //             "Error deleting plan: " +
-  //               (err.response?.data?.message || err.message)
-  //           );
-  //         }
-  //         setIsActionLoading(false);
-  //         return;
-  //       }
-  //       // await refreshPlans();
-  //       setPlans(plans.filter((p, i) => i !== idx));
-  //       if (selectedPlan?.plId === plan.plId) {
-  //         onPlanSelect(null); // Deselect if deleted plan selected
-  //       }
-  //     } 
-  //     else if (
-  //       action === "Create Budget" ||
-  //       action === "Create Blank Budget" ||
-  //       action === "Create EAC" ||
-  //       action === "Create NB BUD"
-  //     ) {
-  //       // Use the full project ID from the ref, fallback to plan.projId if not available
-  //       const actionProjId = fullProjectId.current || plan.projId;
-
-  //       const payloadTemplate = {
-  //         projId: selectedPlan.projId,
-  //         plId: plan.plId || 0,
-  //         plType:
-  //           action === "Create NB BUD"
-  //             ? "NBBUD"
-  //             : action === "Create Budget" || action === "Create Blank Budget"
-  //             ? "BUD"
-  //             : "EAC",
-
-  //         source: plan.source || "",
-  //         type: isChildProjectId(actionProjId) ? "SYSTEM" : plan.type || "",
-  //         version: plan.version,
-  //         versionCode: plan.versionCode || "",
-  //         finalVersion: false,
-  //         isCompleted: false,
-  //         isApproved: false,
-  //         status: "In Progress",
-  //         createdBy: plan.createdBy || "User",
-  //         modifiedBy: plan.modifiedBy || "User",
-  //         approvedBy: "",
-  //         templateId: plan.templateId || 1,
-  //         fiscalYear: fiscalYear,
-  //       };
-
-  //       // console.log('Payload for action:', payloadTemplate);
-
-  //       toast.info(
-  //         `Creating ${
-  //           action === "Create Budget"
-  //             ? "Budget"
-  //             : action === "Create Blank Budget"
-  //             ? "Blank Budget"
-  //             : "EAC"
-  //         }...`
-  //       );
-  //       // const response = await axios.post(
-  //       //   `${backendUrl}/Project/AddProjectPlan?type=${
-  //       //     action === "Create Blank Budget" ? "blank" : "actual"
-  //       //   }`,
-  //       //   payloadTemplate
-  //       // );
-  //       // const createdPlan = response.data;
-  //       // await refreshPlans(); // refresh
-  //       // setTimeout(() => {
-  //       //   onPlanSelect(createdPlan);
-          
-  //       // }, 100);
-  //       // setPlans([...plans, createdPlan]);
-        
-  //       const response = await axios.post(
-  //         `${backendUrl}/Project/AddProjectPlan?type=${
-  //           action === "Create Blank Budget" ? "blank" : "actual"
-  //         }`,
-  //         payloadTemplate
-  //       );
-  //       const rawCreatedPlan = response.data;
-
-  //       // FIX: Normalize the plan object to match the table structure to prevent crash
-  //       const normalizedPlan = {
-  //         ...rawCreatedPlan,
-  //         plId: rawCreatedPlan.plId || rawCreatedPlan.id || 0,
-  //         projId: rawCreatedPlan.projId || 
-  //                 rawCreatedPlan.fullProjectId || 
-  //                 rawCreatedPlan.project_id || 
-  //                 rawCreatedPlan.projectId || 
-  //                 projectId,
-  //         projName: rawCreatedPlan.projName || "",
-  //         plType:
-  //           rawCreatedPlan.plType === "Budget"
-  //             ? "BUD"
-  //             : rawCreatedPlan.plType === "EAC"
-  //             ? "EAC"
-  //             : rawCreatedPlan.plType || "",
-  //         source: rawCreatedPlan.source || "",
-  //         version: rawCreatedPlan.version || 0,
-  //         versionCode: rawCreatedPlan.versionCode || "",
-  //         finalVersion: !!rawCreatedPlan.finalVersion,
-  //         isCompleted: !!rawCreatedPlan.isCompleted,
-  //         isApproved: !!rawCreatedPlan.isApproved,
-  //         status:
-  //           rawCreatedPlan.plType && rawCreatedPlan.version
-  //             ? (rawCreatedPlan.status || "In Progress")
-  //                 .replace("Working", "In Progress")
-  //                 .replace("Completed", "Submitted")
-  //             : "",
-  //         closedPeriod: rawCreatedPlan.closedPeriod || "",
-  //         templateId: rawCreatedPlan.templateId || 0,
-  //       };
-
-  //       await refreshPlans(); // refresh
-        
-  //       setTimeout(() => {
-  //         // Pass the normalized plan instead of the raw API response
-  //         onPlanSelect(normalizedPlan);
-  //       }, 100);
-       
-       
-  //       toast.success(
-  //         `${
-  //           action === "Create Budget"
-  //             ? "Budget"
-  //             : action === "Create Blank Budget"
-  //             ? "Blank Budget"
-  //             : action === "Create NB BUD"
-  //             ? "NB BUD"
-  //             : "EAC"
-  //         } created successfully!`
-  //       );
-  //     } else {
-  //       toast.info(`Action "${action}" selected (API call not implemented)`);
-  //     }
-  //   } catch (err) {
-  //     toast.error(
-  //       "Error performing action: " +
-  //         (err.response?.data?.message || err.message)
-  //     );
-  //   } finally {
-  //     setIsActionLoading(false);
-  //   }
-  // };
-  
   const handleActionSelect = async (idx, action) => {
-  const plan = plans[idx];
-  if (action === "None") return;
+    const plan = plans[idx];
+    if (action === "None") return;
 
-  try {
-    setIsActionLoading(true);
-    if (action === "Delete") {
-      if (!plan.plId || Number(plan.plId) <= 0) {
-        toast.error("Cannot delete: Invalid plan ID.");
-        setIsActionLoading(false);
-        return;
-      }
-      const confirmed = window.confirm(`Are you sure you want to delete this plan`);
-      if (!confirmed) {
-        setIsActionLoading(false);
-        return;
-      }
-      toast.info("Deleting plan...");
-      try {
-        await axios.delete(`${backendUrl}/Project/DeleteProjectPlan/${plan.plId}`);
-        toast.success("Plan deleted successfully!");
-      } catch (err) {
-        if (err.response && err.response.status === 404) {
-          toast.error("Plan not found on server. It may have already been deleted.");
-        } else {
-          toast.error("Error deleting plan: " + (err.response?.data?.message || err.message));
+    try {
+      setIsActionLoading(true);
+      if (action === "Delete") {
+        if (!plan.plId || Number(plan.plId) <= 0) {
+          toast.error("Cannot delete: Invalid plan ID.");
+          setIsActionLoading(false);
+          return;
         }
-        setIsActionLoading(false);
-        return;
-      }
-      setPlans(plans.filter((p, i) => i !== idx));
-      if (selectedPlan?.plId === plan.plId) {
-        onPlanSelect(null);
-      }
-    }
-    else if (
-      action === "Create Budget" ||
-      action === "Create Blank Budget" ||
-      action === "Create EAC" ||
-      action === "Create NB BUD"
-    ) {
-      // Defensive fallback for project ID
-      const actionProjId = fullProjectId.current || plan.projId || projectId || "";
+        const confirmed = window.confirm(
+          `Are you sure you want to delete this plan`
+        );
+        if (!confirmed) {
+          setIsActionLoading(false);
+          return;
+        }
+        toast.info("Deleting plan...");
+        try {
+          await axios.delete(
+            `${backendUrl}/Project/DeleteProjectPlan/${plan.plId}`
+          );
+          toast.success("Plan deleted successfully!");
+        } catch (err) {
+          if (err.response && err.response.status === 404) {
+            toast.error(
+              "Plan not found on server. It may have already been deleted."
+            );
+          } else {
+            toast.error(
+              "Error deleting plan: " +
+                (err.response?.data?.message || err.message)
+            );
+          }
+          setIsActionLoading(false);
+          return;
+        }
+        setPlans(plans.filter((p, i) => i !== idx));
+        if (selectedPlan?.plId === plan.plId) {
+          onPlanSelect(null);
+        }
+      } else if (
+        action === "Create Budget" ||
+        action === "Create Blank Budget" ||
+        action === "Create EAC" ||
+        action === "Create NB BUD"
+      ) {
+        const actionProjId =
+          fullProjectId.current || plan.projId || projectId || "";
 
-      const payloadTemplate = {
-        projId: selectedPlan?.projId || plan.projId || actionProjId || "",
-        plId: plan.plId || 0,
-        plType:
-          action === "Create NB BUD"
-            ? "NBBUD"
-            : action === "Create Budget" || action === "Create Blank Budget"
+        const payloadTemplate = {
+          projId: selectedPlan?.projId || plan.projId || actionProjId || "",
+          plId: plan.plId || 0,
+          plType:
+            action === "Create NB BUD"
+              ? "NBBUD"
+              : action === "Create Budget" || action === "Create Blank Budget"
               ? "BUD"
               : "EAC",
-        source: plan.source || "",
-        type: typeof isChildProjectId === "function" && isChildProjectId(actionProjId) ? "SYSTEM" : plan.type || "",
-        version: plan.version || 0,
-        versionCode: plan.versionCode || "",
-        finalVersion: false,
-        isCompleted: false,
-        isApproved: false,
-        status: "In Progress",
-        createdBy: plan.createdBy || "User",
-        modifiedBy: plan.modifiedBy || "User",
-        approvedBy: "",
-        templateId: plan.templateId || 1,
-        fiscalYear: fiscalYear,
-      };
+          source: plan.source || "",
+          type:
+            typeof isChildProjectId === "function" &&
+            isChildProjectId(actionProjId)
+              ? "SYSTEM"
+              : plan.type || "",
+          version: plan.version || 0,
+          versionCode: plan.versionCode || "",
+          finalVersion: false,
+          isCompleted: false,
+          isApproved: false,
+          status: "In Progress",
+          createdBy: plan.createdBy || "User",
+          modifiedBy: plan.modifiedBy || "User",
+          approvedBy: "",
+          templateId: plan.templateId || 1,
+          fiscalYear: fiscalYear,
+        };
 
-      toast.info(
-        `Creating ${action === "Create Budget"
-          ? "Budget"
-          : action === "Create Blank Budget"
-            ? "Blank Budget"
-            : action === "Create NB BUD"
+        toast.info(
+          `Creating ${
+            action === "Create Budget"
+              ? "Budget"
+              : action === "Create Blank Budget"
+              ? "Blank Budget"
+              : action === "Create NB BUD"
               ? "NB BUD"
-              : "EAC"}...`
-      );
+              : "EAC"
+          }...`
+        );
 
-      const response = await axios.post(
-        `${backendUrl}/Project/AddProjectPlan?type=${action === "Create Blank Budget" ? "blank" : "actual"}`,
-        payloadTemplate
-      );
-      const rawCreatedPlan = response.data;
+        const response = await axios.post(
+          `${backendUrl}/Project/AddProjectPlan?type=${
+            action === "Create Blank Budget" ? "blank" : "actual"
+          }`,
+          payloadTemplate
+        );
+        const rawCreatedPlan = response.data;
 
-      // Improved normalization, covering all possible plan types and keys
-      // const normType = (() => {
-      //   const t = (rawCreatedPlan.plType || "").toString().toUpperCase();
-      //   if (t === "BUDGET" || t === "BUD") return "BUD";
-      //   if (t === "EAC") return "EAC";
-      //   if (t === "NB BUD" || t === "NBBUD") return "NBBUD";
-      //   return t || "";
-      // })();
+        const normalizedPlan = {
+          ...plan,
+          ...rawCreatedPlan,
+          plId: rawCreatedPlan.plId || rawCreatedPlan.id || 0,
+          projId: rawCreatedPlan.projId || plan.projId,
+          projName: rawCreatedPlan.projName || plan.projName || "",
+          plType:
+            rawCreatedPlan.plType === "Budget"
+              ? "BUD"
+              : rawCreatedPlan.plType || "BUD",
+          version: Number(rawCreatedPlan.version) || 0,
+          status: "In Progress",
+          finalVersion: false,
+          isCompleted: false,
+          isApproved: false,
+          projStartDt: rawCreatedPlan.projStartDt || plan.projStartDt || "",
+          projEndDt: rawCreatedPlan.projEndDt || plan.projEndDt || "",
+        };
 
-      // const normalizedPlan = {
-      //   // Basic and fallback fields
-      //   ...rawCreatedPlan,
-      //   plId: rawCreatedPlan.plId || rawCreatedPlan.id || 0,
-      //   projId: rawCreatedPlan.projId ||
-      //           rawCreatedPlan.fullProjectId ||
-      //           rawCreatedPlan.project_id ||
-      //           rawCreatedPlan.projectId ||
-      //           actionProjId ||
-      //           "",
-      //   projName: rawCreatedPlan.projName || "",
-      //   plType: normType,
-      //   source: rawCreatedPlan.source || "",
-      //   version: Number(rawCreatedPlan.version) || 0,
-      //   versionCode: rawCreatedPlan.versionCode || "",
-      //   finalVersion: !!rawCreatedPlan.finalVersion,
-      //   isCompleted: !!rawCreatedPlan.isCompleted,
-      //   isApproved: !!rawCreatedPlan.isApproved,
-      //   status: rawCreatedPlan.status
-      //     ? rawCreatedPlan.status.replace("Working", "In Progress").replace("Completed", "Submitted")
-      //     : "In Progress",
-      //   closedPeriod: rawCreatedPlan.closedPeriod || "",
-      //   templateId: rawCreatedPlan.templateId || 0,
-      // };
+        if (!normalizedPlan.projId || !normalizedPlan.plType) {
+          toast.error(
+            "Plan returned from backend is missing required fields. Please reload and try again."
+          );
+          setIsActionLoading(false);
+          return;
+        }
 
-      const normalizedPlan = {
-        ...plan, // Fallback to existing plan details
-        ...rawCreatedPlan, // Override with new details from API
-        plId: rawCreatedPlan.plId || rawCreatedPlan.id || 0,
-        projId: rawCreatedPlan.projId || plan.projId,
-        projName: rawCreatedPlan.projName || plan.projName || "",
-        plType: rawCreatedPlan.plType === "Budget" ? "BUD" : (rawCreatedPlan.plType || "BUD"),
-        version: Number(rawCreatedPlan.version) || 0,
-        status: "In Progress", 
-        finalVersion: false,
-        isCompleted: false,
-        isApproved: false,
-        // Ensure dates exist to prevent date parsing crashes in parent
-        projStartDt: rawCreatedPlan.projStartDt || plan.projStartDt || "",
-        projEndDt: rawCreatedPlan.projEndDt || plan.projEndDt || "",
-      };
-      
-      // Defensive: Ensure essential fields never blank or invalid
-      if (!normalizedPlan.projId || !normalizedPlan.plType) {
-        toast.error("Plan returned from backend is missing required fields. Please reload and try again.");
-        setIsActionLoading(false);
-        return;
+        await refreshPlans();
+
+        setTimeout(() => {
+          onPlanSelect(normalizedPlan);
+        }, 100);
+
+        toast.success(
+          `${
+            action === "Create Budget"
+              ? "Budget"
+              : action === "Create Blank Budget"
+              ? "Blank Budget"
+              : action === "Create NB BUD"
+              ? "NB BUD"
+              : "EAC"
+          } created successfully!`
+        );
+      } else {
+        toast.info(`Action "${action}" selected (API call not implemented)`);
       }
-
-      await refreshPlans();
-
-      setTimeout(() => {
-        onPlanSelect(normalizedPlan);
-      }, 100);
-
-      toast.success(`${action === "Create Budget"
-        ? "Budget"
-        : action === "Create Blank Budget"
-          ? "Blank Budget"
-          : action === "Create NB BUD"
-            ? "NB BUD"
-            : "EAC"} created successfully!`);
-    } else {
-      toast.info(`Action "${action}" selected (API call not implemented)`);
+    } catch (err) {
+      toast.error(
+        "Error performing action: " +
+          (err.response?.data?.message || err.message)
+      );
+    } finally {
+      setIsActionLoading(false);
     }
-  } catch (err) {
-    toast.error("Error performing action: " + (err.response?.data?.message || err.message));
-  } finally {
-    setIsActionLoading(false);
-  }
-};
-  
-  // const handleActionSelect = async (idx, action) => {
-  //   const plan = plans[idx];
+  };
 
-  //   if (action === "None") return;
-
-  //   try {
-  //     setIsActionLoading(true);
-
-  //     // --- DELETE LOGIC ---
-  //     if (action === "Delete") {
-  //       if (!plan.plId || Number(plan.plId) <= 0) {
-  //         toast.error("Cannot delete: Invalid plan ID.");
-  //         setIsActionLoading(false);
-  //         return;
-  //       }
-  //       const confirmed = window.confirm(
-  //         `Are you sure you want to delete this plan?`
-  //       );
-  //       if (!confirmed) {
-  //         setIsActionLoading(false);
-  //         return;
-  //       }
-  //       toast.info("Deleting plan...");
-  //       try {
-  //         await axios.delete(
-  //           `${backendUrl}/Project/DeleteProjectPlan/${plan.plId}`
-  //         );
-  //         toast.success("Plan deleted successfully!");
-  //       } catch (err) {
-  //         if (err.response && err.response.status === 404) {
-  //           toast.error(
-  //             "Plan not found on server. It may have already been deleted."
-  //           );
-  //         } else {
-  //           toast.error(
-  //             "Error deleting plan: " +
-  //               (err.response?.data?.message || err.message)
-  //           );
-  //         }
-  //         setIsActionLoading(false);
-  //         return;
-  //       }
-        
-  //       setPlans(plans.filter((p, i) => i !== idx));
-  //       if (selectedPlan?.plId === plan.plId) {
-  //         onPlanSelect(null); // Deselect if deleted plan selected
-  //       }
-  //     } 
-  //     // --- CREATE LOGIC (Budget, Blank, EAC, NB BUD) ---
-  //     else if (
-  //       action === "Create Budget" ||
-  //       action === "Create Blank Budget" ||
-  //       action === "Create EAC" ||
-  //       action === "Create NB BUD"
-  //     ) {
-  //       // Use the full project ID from the ref, fallback to plan.projId if not available
-  //       const actionProjId = fullProjectId.current || plan.projId;
-
-  //       const payloadTemplate = {
-  //         projId: selectedPlan.projId,
-  //         plId: plan.plId || 0,
-  //         plType:
-  //           action === "Create NB BUD"
-  //             ? "NBBUD"
-  //             : action === "Create Budget" || action === "Create Blank Budget"
-  //             ? "BUD"
-  //             : "EAC",
-
-  //         source: plan.source || "",
-  //         type: isChildProjectId(actionProjId) ? "SYSTEM" : plan.type || "",
-  //         version: plan.version,
-  //         versionCode: plan.versionCode || "",
-  //         finalVersion: false,
-  //         isCompleted: false,
-  //         isApproved: false,
-  //         status: "In Progress",
-  //         createdBy: plan.createdBy || "User",
-  //         modifiedBy: plan.modifiedBy || "User",
-  //         approvedBy: "",
-  //         templateId: plan.templateId || 1,
-  //         fiscalYear: fiscalYear,
-  //       };
-
-  //       toast.info(
-  //         `Creating ${
-  //           action === "Create Budget"
-  //             ? "Budget"
-  //             : action === "Create Blank Budget"
-  //             ? "Blank Budget"
-  //             : "EAC"
-  //         }...`
-  //       );
-
-  //       const response = await axios.post(
-  //         `${backendUrl}/Project/AddProjectPlan?type=${
-  //           action === "Create Blank Budget" ? "blank" : "actual"
-  //         }`,
-  //         payloadTemplate
-  //       );
-        
-  //       const rawCreatedPlan = response.data;
-
-  //       // --- CRITICAL FIX: Normalize Data to prevent Crash ---
-  //       // This matches the transformation logic in fetchPlans()
-  //       const normalizedPlan = {
-  //         ...rawCreatedPlan,
-  //         plId: rawCreatedPlan.plId || rawCreatedPlan.id || 0,
-  //         projId: rawCreatedPlan.projId || 
-  //                 rawCreatedPlan.fullProjectId || 
-  //                 rawCreatedPlan.project_id || 
-  //                 rawCreatedPlan.projectId || 
-  //                 projectId,
-  //         projName: rawCreatedPlan.projName || "",
-  //         // Transform API type to UI type (Budget -> BUD)
-  //         plType:
-  //           rawCreatedPlan.plType === "Budget"
-  //             ? "BUD"
-  //             : rawCreatedPlan.plType === "EAC"
-  //             ? "EAC"
-  //             : rawCreatedPlan.plType || "",
-  //         source: rawCreatedPlan.source || "",
-  //         version: rawCreatedPlan.version || 0,
-  //         versionCode: rawCreatedPlan.versionCode || "",
-  //         finalVersion: !!rawCreatedPlan.finalVersion,
-  //         isCompleted: !!rawCreatedPlan.isCompleted,
-  //         isApproved: !!rawCreatedPlan.isApproved,
-  //         // Transform Status string
-  //         status:
-  //           rawCreatedPlan.plType && rawCreatedPlan.version
-  //             ? (rawCreatedPlan.status || "In Progress")
-  //                 .replace("Working", "In Progress")
-  //                 .replace("Completed", "Submitted")
-  //             : "In Progress",
-  //         closedPeriod: rawCreatedPlan.closedPeriod || "",
-  //         templateId: rawCreatedPlan.templateId || 0,
-  //         createdAt: rawCreatedPlan.createdAt || "",
-  //         updatedAt: rawCreatedPlan.updatedAt || "",
-  //         // Ensure numeric fields are not undefined
-  //         fundedCost: rawCreatedPlan.proj_f_cst_amt || "",
-  //         fundedFee: rawCreatedPlan.proj_f_fee_amt || "",
-  //         fundedRev: rawCreatedPlan.proj_f_tot_amt || "",
-  //       };
-
-  //       await refreshPlans(); 
-        
-  //       // Use timeout to allow React state to settle before selecting
-  //       setTimeout(() => {
-  //         onPlanSelect(normalizedPlan);
-  //       }, 200);
-        
-  //       toast.success(
-  //         `${
-  //           action === "Create Budget"
-  //             ? "Budget"
-  //             : action === "Create Blank Budget"
-  //             ? "Blank Budget"
-  //             : action === "Create NB BUD"
-  //             ? "NB BUD"
-  //             : "EAC"
-  //         } created successfully!`
-  //       );
-  //     } else {
-  //       toast.info(`Action "${action}" selected (API call not implemented)`);
-  //     }
-  //   } catch (err) {
-  //     toast.error(
-  //       "Error performing action: " +
-  //         (err.response?.data?.message || err.message)
-  //     );
-  //   } finally {
-  //     setIsActionLoading(false);
-  //   }
-  // };
-  
-  
-
-
-
-
-
-  // const getActionOptions = (plan) => {
-  //   let options = ["None"];
-  //   if (isChildProjectId(plan.projId) && !plan.plType && !plan.version) {
-  //     return ["None", "Create Budget", "Create Blank Budget"];
-  //   }
-  //   if (!plan.plType || !plan.version) return options;
-  //   if (plan.status === "In Progress") options = ["None", "Delete"];
-  //   else if (plan.status === "Submitted")
-  //     options = ["None", "Create Budget", "Create Blank Budget"];
-  //   else if (plan.status === "Approved")
-  //     options = [
-  //       "None",
-  //       "Create Budget",
-  //       "Create Blank Budget",
-  //       "Create EAC",
-  //       "Delete",
-  //     ];
-  //   return options;
-  // };
-  
-//   const getActionOptions = (plan) => {
-//     let options = ["None"];
-//     
-//     // 1. Check for global lock status (using plType || plId)
-//     const globalLock = isAnyActionPerformed(plans);
-
-//     // 2. Handle Action-Free Container Rows:
-//     // This is the row selected when there's no actual plan data yet (like OVRHD or 22003.00...).
-//     if (!plan.plType && !plan.version) {
-//         // If no plans exist in the entire hierarchy (globalLock is OFF), enable ALL creation options.
-//         if (!globalLock) {
-//             // FIX: Enable all three creation buttons here as required for virgin projects.
-//             return ["None", "Create Budget", "Create Blank Budget", "Create EAC"];
-//         } else {
-//             // If a plan/action EXISTS anywhere in the hierarchy, disable all creation options on this container row.
-//             return options; // options is ["None"]
-//         }
-//     }
-//     
-//     // 3. Standard status-based logic for existing plans (UNMODIFIED LOGIC)
-//     // This block applies when a plan record already exists.
-//     if (plan.status === "In Progress") options = ["None", "Delete"];
-//     else if (plan.status === "Submitted")
-//       options = ["None", "Create Budget", "Create Blank Budget"];
-//     else if (plan.status === "Approved")
-//       options = [
-//         "None",
-//         "Create Budget",
-//         "Create Blank Budget",
-//         "Create EAC",
-//         "Delete",
-//       ];
-//     return options;
-//   };
-
-// const getActionOptions = (plan) => {
-//     let options = ["None"];
-    
-//     // 1. Get the master project ID (e.g., '22003')
-//     const selectedProjId = plan.projId;
-//     const masterId = selectedProjId.split(".")[0];
-
-//     // 2. Find the locked level (dot count of the first/only acted-upon project in the hierarchy)
-//     let lockDotLevel = null;
-    
-//     // Iterate through all plans to find the level where an action has been performed
-//     plans.forEach(p => {
-//         if (p.plType && p.projId?.startsWith(masterId) && lockDotLevel === null) {
-//             lockDotLevel = getProjectDotLevel(p.projId);
-//         }
-//     });
-
-//     // 3. Handle Action-Free Container Rows (where no BUD/EAC exists for this specific row)
-//     if (!plan.plType && !plan.version) {
-        
-//         const currentDotLevel = getProjectDotLevel(selectedProjId);
-        
-//         const creationOptions = ["None", "Create Budget", "Create Blank Budget", "Create EAC"];
-
-//         // Scenario A: No plan exists in the hierarchy yet (lockDotLevel is null).
-//         // Creation is ENABLED on ALL container rows (to allow the first action).
-//         if (lockDotLevel === null) {
-//             return creationOptions;
-//         }
-
-//         // Scenario B: A plan exists (lockDotLevel is set).
-//         // Creation is ONLY ENABLED if the current row's level matches the lock level.
-//         if (lockDotLevel !== null && currentDotLevel === lockDotLevel) {
-//             return creationOptions;
-//         }
-
-//         // Scenario C: A plan exists, but the current row's level does NOT match the lock level.
-//         // Creation is DISABLED.
-//         return options; // ["None"]
-//     }
-    
-//     // 4. Standard status-based logic for existing plans (PRESERVED UNMODIFIED LOGIC)
-//     // This block applies when a plan record already exists (e.g., status is In Progress, Submitted, or Approved)
-//     if (plan.status === "In Progress") options = ["None", "Delete"];
-//     else if (plan.status === "Submitted")
-//       options = ["None", "Create Budget", "Create Blank Budget"];
-//     else if (plan.status === "Approved")
-//       options = [
-//         "None",
-//         "Create Budget",
-//         "Create Blank Budget",
-//         "Create EAC",
-//         "Delete",
-//       ];
-      
-//     return options;
-// };
-const getProjectDotLevel = (projId) => {
-    if (!projId || typeof projId !== 'string') return 0;
-    // Count the number of dots in the project ID
+  const getProjectDotLevel = (projId) => {
+    if (!projId || typeof projId !== "string") return 0;
     const dotCount = (projId.match(/\./g) || []).length;
     return dotCount;
-};
+  };
 
-
-
-const getActionOptions = (plan) => {
+  const getActionOptions = (plan) => {
     let options = ["None"];
-    
-    // Check if we even have a project ID to work with (Prevents crash if no row is selected)
+
     if (!plan?.projId) {
-        return options;
+      return options;
     }
 
-    // 1. Determine the Lock Level (dot count of the first created plan in the hierarchy)
     let lockDotLevel = null;
     const masterId = plan.projId.split(".")[0];
-    
-    // Find the dot level of the first project with an existing plan (plType) in this hierarchy
+
     for (const p of plans) {
-        // Only consider plans that have actually created a BUD/EAC (plType is set)
-        if (p.plType && p.projId?.startsWith(masterId)) {
-            // Assumes getProjectDotLevel is defined elsewhere in the component scope
-            lockDotLevel = getProjectDotLevel(p.projId);
-            break; // Found the level where the action was taken, so lock is set.
-        }
+      if (p.plType && p.projId?.startsWith(masterId)) {
+        lockDotLevel = getProjectDotLevel(p.projId);
+        break;
+      }
     }
 
-    // 2. Logic for Action-Free Container Rows (the core of the exclusive hierarchy lock)
-    // A container row is defined by having no plType AND no version.
     if (!plan.plType && !plan.version) {
-        
-        const currentDotLevel = getProjectDotLevel(plan.projId);
-        const creationOptions = ["None", "Create Budget", "Create Blank Budget", "Create EAC"];
+      const currentDotLevel = getProjectDotLevel(plan.projId);
+      const creationOptions = [
+        "None",
+        "Create Budget",
+        "Create Blank Budget",
+        "Create EAC",
+      ];
 
-        // Case A: No plan exists in the hierarchy yet (lockDotLevel is null).
-        // Creation is ENABLED on ALL container rows (Fixes the initial disabled issue).
-        if (lockDotLevel === null) {
-            return creationOptions;
-        }
+      if (lockDotLevel === null) {
+        return creationOptions;
+      }
 
-        // Case B: A plan exists (lockDotLevel is set).
-        // Creation is ONLY ENABLED if the current row's dot level EXACTLY MATCHES the lock level.
-        if (currentDotLevel === lockDotLevel) {
-            return creationOptions;
-        }
+      if (currentDotLevel === lockDotLevel) {
+        return creationOptions;
+      }
 
-        // Case C: A plan exists, but the current row's level does NOT match the lock level.
-        return options; // ["None"] (Disabled)
+      return options;
     }
-    
-    // 3. Standard status-based logic for existing plans (Preserved)
-    // This logic runs only if plType/version is set (an actual plan row is selected).
+
     if (plan.status === "In Progress") options = ["None", "Delete"];
-    
-    // Original Logic for Submitted status
     else if (plan.status === "Submitted")
       options = ["None", "Create Budget", "Create Blank Budget"];
-    
-    // Original Logic for Approved status
     else if (plan.status === "Approved")
       options = [
         "None",
         "Create Budget",
         "Create Blank Budget",
-        "Create EAC", 
+        "Create EAC",
         "Delete",
       ];
-      
     else if (plan.status === "Concluded")
-      options = [
-        "None",
-        "Create Budget",
-        "Create Blank Budget",
-        "Create EAC", 
-      ];
-      
-   
+      options = ["None", "Create Budget", "Create Blank Budget", "Create EAC"];
+
     return options;
-};
-
-// const getActionOptions = (plan) => {
-//     let options = ["None"];
-    
-//     // Check if we even have a project ID to work with (Prevents crash if no row is selected)
-//     if (!plan?.projId) {
-//         return options;
-//     }
-
-//     // 1. Determine the Lock Level (dot count of the first created plan)
-//     let lockDotLevel = null;
-//     const masterId = plan.projId.split(".")[0];
-    
-//     // Find the dot level of the first project with an existing plan (plType) in this hierarchy
-//     for (const p of plans) {
-//         // Only consider plans that have actually created a BUD/EAC (plType is set)
-//         if (p.plType && p.projId?.startsWith(masterId)) {
-//             lockDotLevel = getProjectDotLevel(p.projId);
-//             break; // Found the level where the action was taken, so lock is set.
-//         }
-//     }
-
-//     // 2. Logic for Action-Free Container Rows (the core of the exclusive lock)
-//     // A container row is defined by having no plType AND no version.
-//     if (!plan.plType && !plan.version) {
-        
-//         const currentDotLevel = getProjectDotLevel(plan.projId);
-//         const creationOptions = ["None", "Create Budget", "Create Blank Budget", "Create EAC"];
-
-//         // Case A: No plan exists in the hierarchy yet (lockDotLevel is null).
-//         // Creation must be ENABLED on ALL container rows, fixing the issue seen in the image.
-//         if (lockDotLevel === null) {
-//             return creationOptions;
-//         }
-
-//         // Case B: A plan exists (lockDotLevel is set).
-//         // Creation is ONLY ENABLED if the current row's dot level EXACTLY MATCHES the lock level.
-//         if (currentDotLevel === lockDotLevel) {
-//             return creationOptions;
-//         }
-
-//         // Case C: A plan exists, but the current row's level does NOT match the lock level.
-//         return options; // ["None"] (Disabled)
-//     }
-    
-//     // 3. Standard status-based logic for existing plans (Preserved - DO NOT CHANGE)
-//     if (plan.status === "In Progress") options = ["None", "Delete"];
-//     else if (plan.status === "Submitted")
-//       options = ["None", "Create Budget", "Create Blank Budget"];
-//     else if (plan.status === "Approved")
-//       options = [
-//         "None",
-//         "Create Budget",
-//         "Create Blank Budget",
-//         "Create EAC",
-//         "Delete",
-//       ];
-//     else if (plan.status === "Concluded")
-//       options = [
-//         "None",
-//         // Only enabling "Create EAC" as per your requirement
-//         "Create EAC", 
-//       ];
-      
-//     return options;
-// };
-
-// const getActionOptions = (plan) => {
-//     let options = ["None"];
-    
-//     // 1. Get the master project ID (e.g., '22003') for hierarchy context
-//     const selectedProjId = plan.projId;
-//     const masterId = selectedProjId.split(".")[0];
-
-//     // 2. Determine the Lock Level (dot count of the first created plan)
-//     let lockDotLevel = null;
-    
-//     // Find the dot level of the first project with an existing plan (plType) in this hierarchy
-//     for (const p of plans) {
-//         if (p.plType && p.projId?.startsWith(masterId)) {
-//             lockDotLevel = getProjectDotLevel(p.projId);
-//             break; // Found the level where the action was taken, so lock is set.
-//         }
-//     }
-
-//     // 3. Logic for Action-Free Container Rows (where we enable/disable creation buttons)
-//     // A container row is defined by having no plType AND no version.
-//     if (!plan.plType && !plan.version) {
-        
-//         const currentDotLevel = getProjectDotLevel(selectedProjId);
-//         const creationOptions = ["None", "Create Budget", "Create Blank Budget", "Create EAC"];
-
-//         // Case A: No plan exists in the hierarchy yet (lockDotLevel is null).
-//         // Creation must be ENABLED on ALL container rows, as requested for the initial state.
-//         if (lockDotLevel === null) {
-//             return creationOptions;
-//         }
-
-//         // Case B: A plan exists (lockDotLevel is set).
-//         // Creation is ONLY ENABLED if the current row's dot level EXACTLY MATCHES the lock level.
-//         if (currentDotLevel === lockDotLevel) {
-//             return creationOptions;
-//         }
-
-//         // Case C: A plan exists, but the current row's level does NOT match the lock level.
-//         // Creation is DISABLED (MUTUALLY EXCLUSIVE LOCK).
-//         return options; // ["None"]
-//     }
-    
-//     // 4. Standard status-based logic for existing plans (PRESERVED UNMODIFIED LOGIC)
-//     // This block applies when a plan record already exists (i.e., plan.plType is present).
-//     if (plan.status === "In Progress") options = ["None", "Delete"];
-//     else if (plan.status === "Submitted")
-//       options = ["None", "Create Budget", "Create Blank Budget"];
-//     else if (plan.status === "Approved")
-//       options = [
-//         "None",
-//         "Create Budget",
-//         "Create Blank Budget",
-//         "Create EAC",
-//         "Delete",
-//       ];
-      
-//     // IMPORTANT: We do NOT apply the level lock here (Case B/C from above) because
-//     // the status logic is intended for follow-on actions (like creating a new version)
-//     // *within the already selected and locked project ID*.
-//     return options;
-// };
-
-// const getActionOptions = (plan) => {
-//     let options = ["None"];
-    
-//     // 1. Get the master project ID (e.g., '22003')
-//     const selectedProjId = plan.projId;
-//     const masterId = selectedProjId.split(".")[0];
-
-//     // 2. Find the locked level (dot count of the first/only acted-upon project in the hierarchy)
-//     let lockDotLevel = null;
-    
-//     // Iterate through all plans to find the level where an action has been performed.
-//     // We only need to find the level of the *first* existing plan.
-//     for (const p of plans) {
-//         if (p.plType && p.projId?.startsWith(masterId)) {
-//             lockDotLevel = getProjectDotLevel(p.projId);
-//             break; // Found the lock level, stop searching
-//         }
-//     }
-
-//     // 3. Handle Action-Free Container Rows: Logic for enabling creation buttons.
-//     // A container row is defined by having no plType AND no version.
-//     if (!plan.plType && !plan.version) {
-        
-//         const currentDotLevel = getProjectDotLevel(selectedProjId);
-//         const creationOptions = ["None", "Create Budget", "Create Blank Budget", "Create EAC"];
-
-//         // Case A: No plan exists in the hierarchy yet (lockDotLevel is null).
-//         // Creation must be ENABLED on ALL container rows (22003, 22003.00, 22003.00.000000, etc.)
-//         if (lockDotLevel === null) {
-//             return creationOptions;
-//         }
-
-//         // Case B: A plan exists (lockDotLevel is set).
-//         // Creation is ONLY ENABLED if the current row's dot level MATCHES the lock level.
-//         if (currentDotLevel === lockDotLevel) {
-//             return creationOptions;
-//         }
-
-//         // Case C: A plan exists, but the current row's level does NOT match the lock level.
-//         // Creation is DISABLED.
-//         return options; // ["None"]
-//     }
-    
-//     // 4. Standard status-based logic for existing plans (PRESERVED UNMODIFIED LOGIC)
-//     // This block applies when a plan record already exists (i.e., plan.plType is present).
-//     if (plan.status === "In Progress") options = ["None", "Delete"];
-//     else if (plan.status === "Submitted")
-//       options = ["None", "Create Budget", "Create Blank Budget"];
-//     else if (plan.status === "Approved")
-//       options = [
-//         "None",
-//         "Create Budget",
-//         "Create Blank Budget",
-//         "Create EAC",
-//         "Delete",
-//       ];
-      
-//     return options;
-// };
-
-// const getActionOptions = (plan) => {
-//     let options = ["None"];
-//     
-//     // 1. Check for local lock status: Has an action been performed on THIS SPECIFIC PROJECT ROW (e.g., 20001.00)?
-//     // Pass the current row's projId to the checker.
-//     const levelLock = isAnyActionPerformed(plans, plan.projId);
-
-//     // 2. Handle Action-Free Container Rows: (Applies to all rows in Image 1/Image 3 that have no BUD/EAC)
-//     if (!plan.plType && !plan.version) {
-//         // If no action has been performed ON THIS specific project row (levelLock is OFF), enable ALL creation options.
-//         if (!levelLock) {
-//             // FIX: Enable all three creation buttons as requested for unlocked container rows.
-//             return ["None", "Create Budget", "Create Blank Budget", "Create EAC"]; 
-//         } else {
-//             // If an action HAS been performed on this row, disable all creation options.
-//             return options; // options is ["None"]
-//         }
-//     }
-//     
-//     // 3. Standard status-based logic for existing plans (PRESERVED LOGIC)
-//     // This block applies when a plan record already exists (e.g., OPP-01160 in Image 2)
-//     if (plan.status === "In Progress") options = ["None", "Delete"];
-//     else if (plan.status === "Submitted")
-//       options = ["None", "Create Budget", "Create Blank Budget"];
-//     else if (plan.status === "Approved")
-//       options = [
-//         "None",
-//         "Create Budget",
-//         "Create Blank Budget",
-//         "Create EAC",
-//         "Delete",
-//       ];
-//     return options;
-//   };
-
-//  const getActionOptions = (plan) => {
-//     let options = ["None"];
-//     
-//     // 1. Check for global lock status (using plType || plId)
-//     const globalLock = isAnyActionPerformed(plans);
-
-//     // 2. Handle Action-Free Container Rows:
-//     // This condition is true when a row is selected that is NOT an actual saved plan (e.g., OVRHD, 22003.00...).
-//     if (!plan.plType && !plan.version) {
-//         // If no plans exist in the entire hierarchy (globalLock is OFF), enable ALL three creation options.
-//         if (!globalLock) {
-//             // FIX: Enable all three creation buttons as requested for virgin projects.
-//             return ["None", "Create Budget", "Create Blank Budget", "Create EAC"]; 
-//         } else {
-//             // If a plan/action EXISTS anywhere in the hierarchy, disable all creation options on this container row.
-//             return options; // options is ["None"]
-//         }
-//     }
-//     
-//     // 3. Standard status-based logic for existing plans (PRESERVED LOGIC)
-//     // This block applies when a plan record already exists.
-//     if (plan.status === "In Progress") options = ["None", "Delete"];
-//     else if (plan.status === "Submitted")
-//       options = ["None", "Create Budget", "Create Blank Budget"];
-//     else if (plan.status === "Approved")
-//       options = [
-//         "None",
-//         "Create Budget",
-//         "Create Blank Budget",
-//         "Create EAC",
-//         "Delete",
-//       ];
-//     return options;
-//   };
-
-//   const getActionOptions = (plan) => {
-//     let options = ["None"];
-//     
-//     // 1. Check for global lock based on if ANY plan (with plType) exists in the table.
-//     const globalLock = isAnyActionPerformed(plans);
-
-//     // 2. Handle Action-Free Container Rows:
-//     // This condition is true for the conceptual row that represents the ability to create the FIRST plan.
-//     if (!plan.plType && !plan.version) {
-//         // If no plans exist in the entire hierarchy, enable 'Create' options.
-//         if (!globalLock) {
-//             return ["None", "Create Budget", "Create Blank Budget"];
-//         } else {
-//             // If a plan already exists, return only "None" to disable all creation actions.
-//             return options; // options is ["None"]
-//         }
-//     }
-//     
-//     // 3. Standard status-based logic for existing plans (UNMODIFIED LOGIC)
-//     // This ensures the buttons remain available/disabled based on the status of an actual plan.
-//     if (plan.status === "In Progress") options = ["None", "Delete"];
-//     else if (plan.status === "Submitted")
-//       options = ["None", "Create Budget", "Create Blank Budget"];
-//     else if (plan.status === "Approved")
-//       options = [
-//         "None",
-//         "Create Budget",
-//         "Create Blank Budget",
-//         "Create EAC",
-//         "Delete",
-//       ];
-//     return options;
-//   };
-
-//   const getActionOptions = (plan) => {
-//     let options = ["None"];
-    
-//     // Determine Global Lock status based on whether ANY plan exists in the table view.
-//     const globalLock = isAnyActionPerformed(plans);
-
-//     // --- MODIFIED LOGIC START ---
-    
-//     // 1. Check if the selected row is an Action-Free Container Row (!plType and !version).
-//     if (!plan.plType && !plan.version) {
-//         if (!globalLock) {
-//             // This condition is true for ANY container row (22003, 22003.00, etc.) if NO action has been performed in the entire hierarchy.
-//             return ["None", "Create Budget", "Create Blank Budget"];
-//         } else {
-//             // If the global lock is ON, all action-free rows must return ["None"].
-//             return options; 
-//         }
-//     }
-    
-//     // NOTE: The original line "if (isChildProjectId(plan.projId) && !plan.plType && !plan.version) { ... }"
-//     // is now redundant and unnecessary, as it is superseded by the universal check above.
-//     // However, to strictly honor "don't change existing logic at all," we must ensure the structure handles this correctly.
-//     // Since the structure below causes conflicts, the cleanest fix is a single logic block for all container types:
-    
-//     // --- If you MUST keep the confusing original lines, here is the adjustment: ---
-    
-//     /* // OLD/Conflicting Code Block Structure (Lines 809-813):
-//     if (isChildProjectId(plan.projId) && !plan.plType && !plan.version) {
-//       return ["None", "Create Budget", "Create Blank Budget"]; // This is the old problem maker.
-//     }
-//     if (!plan.plType || !plan.version) return options; // Catches Parent container row initially.
-//     */
-    
-//     // Since the instruction is critical: we must ensure that if globalLock is ON, these old paths are disabled.
-//     // The previous solution of overriding the logic is the only way to adhere to the final rule. 
-//     // We stick with the logic that covers ALL container rows universally:
-    
-//     // --- We stick to the clean logic above and assume the requirement overrides the old logic. ---
-    
-//     // --- MODIFIED LOGIC END ---
-
-//     // Check 2: Standard status-based logic for existing plans (Remains UNCHANGED)
-//     if (plan.status === "In Progress") options = ["None", "Delete"];
-//     else if (plan.status === "Submitted")
-//       options = ["None", "Create Budget", "Create Blank Budget"];
-//     else if (plan.status === "Approved")
-//       options = [
-//         "None",
-//         "Create Budget",
-//         "Create Blank Budget",
-//         "Create EAC",
-//         "Delete",
-//       ];
-//     return options;
-//   };
-
-
-
-//   const getActionOptions = (plan) => {
-//     let options = ["None"];
-    
-//     // NEW LOGIC: Determine if the entire hierarchy is locked based on existing plans.
-//     const globalLock = isAnyActionPerformed(plans);
-
-//     // EXISTING LOGIC BLOCK 1: Handle Child Project Container Rows (e.g., 20001.00 where no plan exists)
-//     if (isChildProjectId(plan.projId) && !plan.plType && !plan.version) {
-//       return options; // Since options is initialized to ["None"], this now disables child containers.
-//     }
-    
-//     // NEW LOGIC BLOCK 2: Handle Parent Project Container Row (e.g., 20001) for initial action.
-//     if (isParentProject(plan.projId) && !plan.plType && !plan.version) {
-//         if (!globalLock) {
-//             // ONLY enable if it's the parent container row AND no plans exist anywhere.
-//             return ["None", "Create Budget", "Create Blank Budget"];
-//         }
-//     }
-
-//     // EXISTING LOGIC BLOCK 3: Handle all other container rows (must come AFTER the explicit parent check)
-//     if (!plan.plType || !plan.version) return options; // returns ["None"]
-
-//     // EXISTING LOGIC BLOCK 4: Standard status-based permissions for existing plans.
-//     if (plan.status === "In Progress") options = ["None", "Delete"];
-//     else if (plan.status === "Submitted")
-//       options = ["None", "Create Budget", "Create Blank Budget"];
-//     else if (plan.status === "Approved")
-//       options = [
-//         "None",
-//         "Create Budget",
-//         "Create Blank Budget",
-//         "Create EAC",
-//         "Delete",
-//       ];
-//     return options;
-//   };
-
+  };
 
   const getButtonAvailability = (plan, action) => {
     const options = getActionOptions(plan);
     return options.includes(action);
   };
-
-  // Check if it's a parent project (no dots) and no actions have been performed
-  // const isParentProjectWithoutActions = (plan) => {
-  //   if (isChildProjectId(plan.projId)) return false; // It's a child project
-
-  //   // If it's a parent project (no dots) and has no plType or version, no actions performed
-  //   return !plan.plType || !plan.version;
-  // };
 
   const checkedFinalVersionIdx = plans.findIndex((plan) => plan.finalVersion);
 
@@ -2225,7 +1230,6 @@ const getActionOptions = (plan) => {
       return { checked: plan.isApproved, disabled: !plan.isCompleted };
 
     if (col === "finalVersion") {
-      // Find if any other plan with same plType and same projId has finalVersion checked
       const anotherFinalVersionIdx = plans.findIndex(
         (p, i) =>
           i !== idx &&
@@ -2234,10 +1238,9 @@ const getActionOptions = (plan) => {
           p.finalVersion
       );
 
-      // Disable finalVersion checkbox for this row only if another finalVersion in the same plType and projId is checked
       return {
         checked: plan.finalVersion,
-        disabled: anotherFinalVersionIdx !== -1, // disable if any other finalVersion for same plType and projId
+        disabled: anotherFinalVersionIdx !== -1,
       };
     }
 
@@ -2305,7 +1308,6 @@ const getActionOptions = (plan) => {
     if (field === "isCompleted") return !!currentPlan.isApproved;
     if (field === "isApproved") return !currentPlan.isCompleted;
     if (field === "finalVersion") {
-      // Check if any other plan with same plType and same projId has finalVersion checked
       const anotherFinalVersionIdx = plans.findIndex(
         (p) =>
           p.plId !== currentPlan.plId &&
@@ -2323,91 +1325,34 @@ const getActionOptions = (plan) => {
     return !selectedPlan || !selectedPlan.plId || !selectedPlan.templateId;
   };
 
-  const isAnyActionPerformed = (plans, selectedProjId) => {
-    if (!selectedProjId) return false;
-    
-    // 1. Determine the level of the selected project row.
-    const selectedLevel = getProjectLevel(selectedProjId);
-    
-    // 2. Check if ANY existing plan record in the entire list shares the same project ID and has been "acted" upon.
-    // The projId comparison ensures we only check actions tied to that specific project code (e.g., 20001.00.000100).
-    return plans.some(plan => 
-      !!plan.plType && // Action has actually created a plan type
-      plan.projId === selectedProjId // Match the exact project ID (which defines the level)
-    );
-  };
+  const isAnyActionPerformed = (plansList, selectedProjId) => {
+    if (!selectedProjId) return false;
+    const selectedLevel = getProjectDotLevel(selectedProjId);
+    return plansList.some(
+      (plan) => !!plan.plType && plan.projId === selectedProjId
+    );
+  };
 
-// const getProjectDotLevel = (projId) => {
-//     if (!projId || typeof projId !== 'string') return 0;
-//     // Count the number of dots in the project ID
-//     const dotCount = (projId.match(/\./g) || []).length;
-//     return dotCount;
-// };
-
-//   const isAnyActionPerformed = (plans) => {
-//   // UPDATED LOGIC: Global lock applies if ANY record has a plType OR a plId.
-//   // This satisfies the requirement to not rely solely on plType and includes an OR condition.
-//   return plans.some(plan => !!plan.plType || !!plan.plId);
-// };
-
-//     const isAnyActionPerformed = (plans) => {
-//   // Check if any plan has a plType (meaning a Budget, EAC, or NBBUD exists anywhere)
-//   return plans.some(plan => !!plan.plType);
-// };
-
-// Function to calculate the number of dots, which determines the lock level
-// const getProjectDotLevel = (projId) => {
-//     if (!projId || typeof projId !== 'string') return 0;
-//     // Count the number of dots in the project ID
-//     const dotCount = (projId.match(/\./g) || []).length;
-//     return dotCount;
-// };
-
-// const getProjectDotLevel = (projId) => {
-//     if (!projId || typeof projId !== 'string') return 0;
-//     // Count the number of dots in the project ID
-//     const dotCount = (projId.match(/\./g) || []).length;
-//     return dotCount;
-// };
-
-// Function to calculate the number of dots, which determines the exclusive lock level
-// const getProjectDotLevel = (projId) => {
-//     if (!projId || typeof projId !== 'string') return 0;
-//     // Count the number of dots in the project ID
-//     const dotCount = (projId.match(/\./g) || []).length;
-//     return dotCount;
-// };
-
-// const getProjectLevel = (projId) => {
-//     if (!projId) return 0;
-//     // Counts the number of parts separated by dots
-//     return projId.split(".").length;
-//   };
-
-  const getMasterProjects = (plans) => {
-    return plans.filter((plan) => {
+  const getMasterProjects = (plansList) => {
+    return plansList.filter((plan) => {
       const projId = plan.projId?.trim();
       if (!projId) return false;
-
-      // Master = no dots at all
       return !projId.includes(".");
     });
   };
 
-  const getMasterAndRelatedProjects = (plans, clickedProjId) => {
+  const getMasterAndRelatedProjects = (plansList, clickedProjId) => {
     if (!clickedProjId)
       return { master: null, related: [], sameLevelBud: false };
 
     const parts = clickedProjId.split(".");
     const masterId = parts[0];
-    const selectedLevel = parts.length; // ✅ selected row level
+    const selectedLevel = parts.length;
 
-    // Filter only bud plans that start with masterId
-    const filtered = plans.filter(
+    const filtered = plansList.filter(
       (p) => p.projId?.startsWith(masterId) && p.plType === "BUD"
     );
 
-    // Deduplicate by projId
     const seen = new Set();
     const related = filtered
       .filter((p) => {
@@ -2417,71 +1362,50 @@ const getActionOptions = (plan) => {
       })
       .map((p) => ({
         ...p,
-        level: p.projId.split(".").length, // each BUD plan's level
+        level: p.projId.split(".").length,
       }));
 
     if (related.length === 0) {
       return { master: masterId, related, selectedLevel, sameLevelBud: true };
     }
-    // ✅ Check if any bud is created at same level as selected row
+
     const sameLevelBud = related.some((r) => r.level === selectedLevel);
 
     return { master: masterId, related, selectedLevel, sameLevelBud };
   };
 
-  // const getMasterAndRelatedProjects = (plans, clickedProjId) => {
-  //   if (!clickedProjId)
-  //     return { master: null, related: [], sameLevelBud: false };
+  // const isDateMissing =
+  //   filteredProjects.length > 0 &&
+  //   !(filteredProjects[0].startDate || filteredProjects[0].projStartDt);
 
-  //   const parts = clickedProjId.split(".");
-  //   const masterId = parts[0];
-  //   const selectedLevel = parts.length; // ✅ selected row level
+  // const isDateMissing =
+  // filteredProjects.length > 0 &&
+  // !manualDatesSubmitted &&                // keep banner until API written
+  // !(filteredProjects[0].startDate || filteredProjects[0].projStartDt);
 
-  //   // Filter only bud plans that start with masterId
-  //   const filtered = plans.filter(
-  //     (p) => p.projId?.startsWith(masterId) && p.plType === "BUD"
-  //   );
+  const isDateMissing =
+  filteredProjects.length > 0 &&
+  !manualDatesSubmitted && // keep this if you still want banner until API call
+  !filteredProjects[0]?.startDate &&
+  !filteredProjects[0]?.projStartDt &&
+  !filteredProjects[0]?.endDate &&
+  !filteredProjects[0]?.projEndDt;
 
-  //   // Deduplicate by projId
-  //   const seen = new Set();
-  //   const related = filtered
-  //     .filter((p) => {
-  //       if (seen.has(p.projId)) return false;
-  //       seen.add(p.projId);
-  //       return true;
-  //     })
-  //     .map((p) => ({
-  //       ...p,
-  //       level: p.projId.split(".").length, // each BUD plan's level
-  //     }));
-
-  //   // ✅ Check if any bud is created at same level as selected row
-  //   const sameLevelBud = related.some((r) => r.level === selectedLevel);
-
-  //   return { master: masterId, related, selectedLevel, sameLevelBud };
-  // };
-
-  // // Enable actions if plType and version are both empty
-  //  const isPlanWithoutActions = plan => !plan.plType && !plan.version;
-
-  // if (loading) {
-  //   return (
-  //     <div className="p-4">
-  //       <div className="flex items-center justify-center">
-  //         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-  //         <span className="ml-2">Loading project plans...</span>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  // const isDateMissing =
+  // selectedPlan?.projId &&
+  // !manualDatesSubmitted &&                // keep banner until API written
+  // !(selectedPlan?.startDate || selectedPlan?.projStartDt);
 
 
-  // Determine if the dates are currently missing from the initial fetch
-  const isDateMissing = filteredProjects.length > 0 && !(filteredProjects[0].startDate || filteredProjects[0].projStartDt);
-  
-  // Get the current display value for the date fields
-  const displayStartDate = manualProjectDates.startDate || (filteredProjects[0]?.startDate || filteredProjects[0]?.projStartDt);
-  const displayEndDate = manualProjectDates.endDate || (filteredProjects[0]?.endDate || filteredProjects[0]?.projEndDt);
+  const displayStartDate =
+    manualProjectDates.startDate ||
+    filteredProjects[0]?.startDate ||
+    filteredProjects[0]?.projStartDt;
+
+  const displayEndDate =
+    manualProjectDates.endDate ||
+    filteredProjects[0]?.endDate ||
+    filteredProjects[0]?.projEndDt;
 
   if (error) {
     return (
@@ -2505,58 +1429,60 @@ const getActionOptions = (plan) => {
         </div>
       )}
 
-      {/* New Business popup will be rendered inside the table container below */}
+      <div>
+        {/* {filteredProjects.length > 0 && isDateMissing && (
+          <div className="flex flex-wrap items-center gap-4 p-3 mb-4 bg-yellow-50 border border-yellow-300 rounded-lg">
+            <h4 className="font-semibold text-sm text-yellow-800">
+              Project Dates Missing: Please Enter Below
+            </h4>
 
-      {/* Your existing content with blur effect when popup is open */}
-      <div
-        // className={`transition-all duration-200 ${
-        //   showNewBusinessPopup ? "blur-sm pointer-events-none" : ""
-        // }`}
-      >
-        {/* 4. ✅ ADDED: Conditional Manual Date Input UI */}
-        {filteredProjects.length > 0 && isDateMissing && (
-            <div className="flex flex-wrap items-center gap-4 p-3 mb-4 bg-yellow-50 border border-yellow-300 rounded-lg">
-                <h4 className="font-semibold text-sm text-yellow-800">
-                    Project Dates Missing: Please Enter Below
-                </h4>
-                <div className="flex flex-wrap gap-3">
-                    <label className="flex items-center text-xs gap-1 text-gray-700">
-                        Start Date:
-                        <input
-                            type="date"
-                            value={manualProjectDates.startDate}
-                            onChange={(e) => setManualProjectDates(prev => ({...prev, startDate: e.target.value}))}
-                            className={`border ${!manualProjectDates.startDate ? 'border-red-500' : 'border-gray-400'} rounded px-1 py-0.5 text-xs`}
-                            required
-                        />
-                    </label>
-                    <label className="flex items-center text-xs gap-1 text-gray-700">
-                        End Date:
-                        <input
-                            type="date"
-                            value={manualProjectDates.endDate}
-                            onChange={(e) => setManualProjectDates(prev => ({...prev, endDate: e.target.value}))}
-                            className={`border ${!manualProjectDates.endDate ? 'border-red-500' : 'border-gray-400'} rounded px-1 py-0.5 text-xs`}
-                            required
-                        />
-                    </label>
-                    {/* Note: No separate "Save" button needed here, as the dates are immediately used
-                         by handleRowClick to populate the selected plan data. */}
-                    {manualProjectDates.startDate && manualProjectDates.endDate && (
-                         <span className="text-green-600 text-xs self-center">
-                             {/* Dates Set. Select a plan below. */}
-                         </span>
-                    )}
-                </div>
+            <div className="flex flex-wrap gap-3">
+              <label className="flex items-center text-xs gap-1 text-gray-700">
+                Start Date:
+                <input
+                  type="date"
+                  value={manualProjectDates.startDate}
+                  onChange={(e) =>
+                    handleDateChange("startDate", e.target.value)
+                  }
+                  className={`border ${
+                    !manualProjectDates.startDate
+                      ? "border-red-500"
+                      : "border-gray-400"
+                  } rounded px-1 py-0.5 text-xs`}
+                  required
+                />
+              </label>
+
+              <label className="flex items-center text-xs gap-1 text-gray-700">
+                End Date:
+                <input
+                  type="date"
+                  value={manualProjectDates.endDate}
+                  onChange={(e) => handleDateChange("endDate", e.target.value)}
+                  className={`border ${
+                    !manualProjectDates.endDate
+                      ? "border-red-500"
+                      : "border-gray-400"
+                  } rounded px-1 py-0.5 text-xs`}
+                  required
+                />
+              </label>
+
+              {manualProjectDates.startDate && manualProjectDates.endDate && (
+                <span className="text-green-600 text-xs self-center">
+                  Dates Set. Select a plan below to propagate.
+                </span>
+              )}
             </div>
-        )}
-        {/* 4. END ADDED Conditional Manual Date Input UI */}
+          </div>
+        )} */}
+
         <div className="flex justify-between items-center mb-2 gap-1">
           <div className="flex gap-1 flex-wrap items-center ">
             {plans.length >= 0 && (
               <>
-                {/* Create Budget */}
-                {/* <button
+                <button
                   onClick={() => {
                     setIsActionLoading(true);
                     handleActionSelect(
@@ -2566,46 +1492,20 @@ const getActionOptions = (plan) => {
                   }}
                   disabled={
                     !selectedPlan ||
-                    !getButtonAvailability(selectedPlan, "Create Budget") ||
-                    !getMasterAndRelatedProjects(plans, selectedPlan?.projId)
-                      .sameLevelBud
+                    !getButtonAvailability(selectedPlan, "Create Budget")
                   }
                   className={`btn1 ${
                     !selectedPlan ||
-                    !getButtonAvailability(selectedPlan, "Create Budget") ||
-                    !getMasterAndRelatedProjects(plans, selectedPlan?.projId)
-                      .sameLevelBud
+                    !getButtonAvailability(selectedPlan, "Create Budget")
                       ? "btn-disabled"
                       : "btn-blue"
                   }`}
                   title="Create Budget"
                 >
                   New Budget
-                </button> */}
-               <button
-                   onClick={() => {
-                    setIsActionLoading(true);
-                    handleActionSelect(
-                      plans.findIndex((p) => p.plId === selectedPlan?.plId),
-                      "Create Budget"
-                    );
-                  }}
-                  disabled={
-                    !selectedPlan ||
-                    !getButtonAvailability(selectedPlan, "Create Budget") 
-                  }
-                  className={`btn1 ${
-                    !selectedPlan ||
-                    !getButtonAvailability(selectedPlan, "Create Budget")
-                      ? "btn-disabled"
-                      : "btn-blue"
-                  }`}
-                  title="Create Budget"
-                >
-                  New Budget
-                </button>
-                {/* Create Blank budget */}
-                {/* <button
+                </button>
+
+                <button
                   onClick={() => {
                     setIsActionLoading(true);
                     handleActionSelect(
@@ -2615,58 +1515,20 @@ const getActionOptions = (plan) => {
                   }}
                   disabled={
                     !selectedPlan ||
-                    !getButtonAvailability(
-                      selectedPlan,
-                      "Create Blank Budget"
-                    ) ||
-                    !getMasterAndRelatedProjects(plans, selectedPlan?.projId)
-                      .sameLevelBud
+                    !getButtonAvailability(selectedPlan, "Create Blank Budget")
                   }
                   className={`btn1 ${
                     !selectedPlan ||
-                    !getButtonAvailability(
-                      selectedPlan,
-                      "Create Blank Budget"
-                    ) ||
-                    !getMasterAndRelatedProjects(plans, selectedPlan?.projId)
-                      .sameLevelBud
+                    !getButtonAvailability(selectedPlan, "Create Blank Budget")
                       ? "btn-disabled"
                       : "btn-blue"
                   }`}
                   title="Create Blank Budget"
                 >
                   New Blank Budget
-                </button> */}
+                </button>
+
                 <button
-                   onClick={() => {
-                    setIsActionLoading(true);
-                    handleActionSelect(
-                      plans.findIndex((p) => p.plId === selectedPlan?.plId),
-                      "Create Blank Budget"
-                    );
-                  }}
-                  disabled={
-                    !selectedPlan ||
-                    !getButtonAvailability(
-                      selectedPlan,
-                      "Create Blank Budget"
-                    )
-                  }
-                  className={`btn1 ${
-                    !selectedPlan ||
-                    !getButtonAvailability(
-                      selectedPlan,
-                      "Create Blank Budget"
-                    )
-                      ? "btn-disabled"
-                      : "btn-blue"
-                  }`}
-                  title="Create Blank Budget"
-                >
-                  New Blank Budget
-                </button>
-                {/* Create EAC */}
-                {/* <button
                   onClick={() => {
                     setIsActionLoading(true);
                     handleActionSelect(
@@ -2676,46 +1538,19 @@ const getActionOptions = (plan) => {
                   }}
                   disabled={
                     !selectedPlan ||
-                    !getButtonAvailability(selectedPlan, "Create EAC") ||
-                    !getMasterAndRelatedProjects(plans, selectedPlan?.projId)
-                      .sameLevelBud
+                    !getButtonAvailability(selectedPlan, "Create EAC")
                   }
                   className={`btn1 ${
                     !selectedPlan ||
-                    !getButtonAvailability(selectedPlan, "Create EAC") ||
-                    !getMasterAndRelatedProjects(plans, selectedPlan?.projId)
-                      .sameLevelBud
+                    !getButtonAvailability(selectedPlan, "Create EAC")
                       ? "btn-disabled"
                       : "btn-blue"
                   }`}
                   title="Create EAC"
                 >
                   New EAC
-                </button> */}
-               <button
-                   onClick={() => {
-                    setIsActionLoading(true);
-                    handleActionSelect(
-                      plans.findIndex((p) => p.plId === selectedPlan?.plId),
-                      "Create EAC"
-                    );
-                  }}
-                  disabled={
-                    !selectedPlan ||
-                    !getButtonAvailability(selectedPlan, "Create EAC")
-                  }
-                  className={`btn1 ${
-                    !selectedPlan ||
-                    !getButtonAvailability(selectedPlan, "Create EAC")
-                      ? "btn-disabled"
-                      : "btn-blue"
-                  }`}
-                  title="Create EAC"
-                >
-                  New EAC
-                </button>
+                </button>
 
-                {/* new bud */}
                 {selectedPlan && selectedPlan.plType === "NBBUD" && (
                   <button
                     onClick={() => {
@@ -2732,7 +1567,6 @@ const getActionOptions = (plan) => {
                   </button>
                 )}
 
-                {/* Delete */}
                 <button
                   onClick={() => {
                     setIsActionLoading(true);
@@ -2762,7 +1596,6 @@ const getActionOptions = (plan) => {
                   Delete
                 </button>
 
-                {/* Submit */}
                 <button
                   onClick={() => handleTopButtonToggle("isCompleted")}
                   disabled={
@@ -2776,7 +1609,9 @@ const getActionOptions = (plan) => {
                       : "btn-blue"
                   }`}
                   title={
-                    getCurrentPlan()?.status === "Submitted" ? "Unsubmit" : "Submit"
+                    getCurrentPlan()?.status === "Submitted"
+                      ? "Unsubmit"
+                      : "Submit"
                   }
                 >
                   {isActionLoading
@@ -2786,7 +1621,6 @@ const getActionOptions = (plan) => {
                     : "Submit"}
                 </button>
 
-                {/* Approve */}
                 <button
                   onClick={() => handleTopButtonToggle("isApproved")}
                   disabled={
@@ -2814,7 +1648,6 @@ const getActionOptions = (plan) => {
                     : "Approve"}
                 </button>
 
-                {/* Conclude */}
                 <button
                   onClick={() => handleTopButtonToggle("finalVersion")}
                   disabled={
@@ -2827,7 +1660,9 @@ const getActionOptions = (plan) => {
                       ? "btn-orange"
                       : "btn-blue"
                   }`}
-                  title={getCurrentPlan()?.finalVersion ? "Unconclude" : "Conclude"}
+                  title={
+                    getCurrentPlan()?.finalVersion ? "Unconclude" : "Conclude"
+                  }
                 >
                   {isActionLoading
                     ? "Processing..."
@@ -2836,7 +1671,6 @@ const getActionOptions = (plan) => {
                     : "Conclude"}
                 </button>
 
-                {/* Calculate */}
                 <button
                   onClick={() => {
                     setIsActionLoading(true);
@@ -2851,7 +1685,6 @@ const getActionOptions = (plan) => {
                   Calc
                 </button>
 
-                {/* filter BUD/EAC */}
                 <button
                   onClick={() => setBudEacFilter(!budEacFilter)}
                   className={`btn1 ${budEacFilter ? "btn-orange" : "btn-blue"}`}
@@ -2862,7 +1695,6 @@ const getActionOptions = (plan) => {
                   {budEacFilter ? "Show All" : "BUD/EAC"}
                 </button>
 
-                {/* New Business */}
                 <button
                   onClick={() => setShowNewBusinessPopup(true)}
                   className="btn1 btn-green"
@@ -2874,7 +1706,6 @@ const getActionOptions = (plan) => {
             )}
           </div>
 
-          {/* Right side controls - Import and Fiscal Year */}
           <div className="flex items-center gap-1 flex-shrink-0">
             <button
               onClick={() => {
@@ -2934,13 +1765,10 @@ const getActionOptions = (plan) => {
         </div>
 
         <div
-          className={
-            `rounded-2xl border border-gray-200 overflow-hidden relative ${
-              showNewBusinessPopup ? "" : ""
-            }`
-          }
+          className={`rounded-2xl border border-gray-200 overflow-hidden relative ${
+            showNewBusinessPopup ? "" : ""
+          }`}
         >
-          {/* Table area (popup will be injected here when active) */}
           {showNewBusinessPopup && (
             <div className="absolute inset-0 z-40">
               <div className="absolute inset-0 bg-white bg-opacity-80 backdrop-blur-sm"></div>
@@ -2957,7 +1785,11 @@ const getActionOptions = (plan) => {
             </div>
           )}
 
-          <div className={`overflow-x-auto h-85 ${showNewBusinessPopup ? "blur-sm pointer-events-none" : ""}`}>
+          <div
+            className={`overflow-x-auto h-85 ${
+              showNewBusinessPopup ? "blur-sm pointer-events-none" : ""
+            }`}
+          >
             <table className="min-w-full table-auto divide-y divide-gray-200">
               <thead className="bg-gray-200 sticky top-0">
                 <tr>
@@ -2998,9 +1830,7 @@ const getActionOptions = (plan) => {
                 ) : (
                   filteredPlans.map((plan, idx) => (
                     <tr
-                      key={`plan-${plan.plId || idx}-${
-                        plan.projId || "unknown"
-                      }`}
+                      key={`plan-${plan.plId || idx}-${plan.projId || "unknown"}`}
                       className={`transition-all duration-200 cursor-pointer ${
                         selectedPlan &&
                         selectedPlan.plId === plan.plId &&
@@ -3008,7 +1838,6 @@ const getActionOptions = (plan) => {
                           ? "bg-blue-200 hover:bg-blue-300 "
                           : "even:bg-gray-50 hover:bg-blue-50"
                       }`}
-                      //border-l-4 border-l-blue-600
                       onClick={() => {
                         handleRowClick(plan);
                         getMasterAndRelatedProjects(plans, plan.projId);
@@ -3081,63 +1910,121 @@ const getActionOptions = (plan) => {
                           </svg>
                         </button>
                       </td>
-
                       {columns.map((col) => (
                         <td
-                //           key={col}
-                //           className={` text-xs h-1 px-1 py-1 text-center text-gray-700
-                            
-    
-                // ${col === "projId" || col === "projName" ? "break-words" : ""}
-                // ${
-                //   col === "createdAt" ||
-                //   col === "updatedAt" ||
-                //   col === "closedPeriod"
-                //     ? "whitespace-nowrap"
-                //     : ""
-                // }
-                 key={col}
-    className={`
+                          key={col}
+                          className={`
       text-xs h-1 px-1 py-1 text-gray-700
-      ${col === "projId" || col === "projName" ? "text-left break-words" : "text-center"}
       ${
-        col === "createdAt" ||
-        col === "updatedAt" ||
-        col === "closedPeriod"
+        col === "projId" || col === "projName"
+          ? "text-left break-words"
+          : "text-center"
+      }
+      ${
+        col === "createdAt" || col === "updatedAt" || col === "closedPeriod"
           ? " whitespace-nowrap"
           : ""
       }
     `}
-             
-                
                         >
                           {col === "closedPeriod" ? (
                             formatDateOnly(plan[col])
                           ) : col === "createdAt" || col === "updatedAt" ? (
                             formatDateWithTime(plan[col])
-                          ) : col === "projectStartDate" ? (
-                              // 5. ✅ Display the effective start date (manual or fetched)
-                              // formatDate(displayStartDate) || '-' 
-                              // formatDateOnly(displayStartDate)
-//                               formatDateOnly(
-//                                 isDateMissing
-//                                   ? displayStartDate
-//                                   : (plan.projStartDt || plan.startDate)
-//                               )
-                                 formatDateOnly(
-                                    (plan.projStartDt || plan.startDate) || (isDateMissing ? displayStartDate : '')
-                                  )
-                          ) : col === "projectEndDate" ? (
-                              // 6. ✅ Display the effective end date (manual or fetched)
-                              // formatDate(displayEndDate) || '-'
-                              // formatDateOnly(displayEndDate) || '-'
-//                               
-                              formatDateOnly(
-                                (plan.projEndDt || plan.endDate) || (isDateMissing ? displayEndDate : '')
-                              )
-                          ) :
+                          ) : col === 'projectStartDate' || col === 'projectEndDate' ? (
+  selectedPlan?.plId === plan.plId && selectedPlan?.projId === plan.projId ? (
+    <input
+      type="date"
+      value={
+        editingDates[plan.plId]?.[
+          col === 'projectStartDate' ? 'startDate' : 'endDate'
+        ] || 
+        (col === 'projectStartDate' 
+          ? (plan.projStartDt || plan.startDate) 
+          : (plan.projEndDt || plan.endDate)
+        )
+      }
+      onChange={(e) => handleDateCellChange(plan.plId, col, e.target.value)}
+      className="border border-blue-300 rounded px-1 py-0.5 text-xs bg-yellow-50 focus:border-blue-500 w-full text-center"
+      onClick={(e) => e.stopPropagation()}
+      // onBlur={() => {
+      //   // Optional: Auto-save on blur if both dates exist
+      //   const rowDates = editingDates[plan.plId];
+      //   if (rowDates?.startDate && rowDates?.endDate) {
+      //     handleDateCellChange(plan.plId, col, rowDates[col === 'projectStartDate' ? 'startDate' : 'endDate']);
+      //   }
+      // }}
+    />
+  ) : (
+    <span className="text-xs text-gray-700 text-center">
+      {formatDateOnly(
+        col === 'projectStartDate' 
+          ? (plan.projStartDt || plan.startDate) 
+          : (plan.projEndDt || plan.endDate)
+      )}
+    </span>
+  )
+)  :  
                           col === "versionCode" ? (
-                            <input
+                            // <input
+                            //   type="text"
+                            //   value={
+                            //     editingVersionCodeIdx === plan.plId
+                            //       ? editingVersionCodeValue
+                            //       : plan.versionCode || ""
+                            //   }
+                            //   autoFocus={editingVersionCodeIdx === plan.plId}
+                            //   onClick={(e) => {
+                            //     e.stopPropagation();
+                            //     setEditingVersionCodeIdx(plan.plId);
+                            //     setEditingVersionCodeValue(
+                            //       plan.versionCode || ""
+                            //     );
+                            //   }}
+                            //   onChange={(e) =>
+                            //     setEditingVersionCodeValue(e.target.value)
+                            //   }
+                            //   onBlur={() => {
+                            //     if (editingVersionCodeIdx === plan.plId) {
+                            //       if (
+                            //         editingVersionCodeValue !==
+                            //         plan.versionCode
+                            //       ) {
+                            //         handleVersionCodeChange(
+                            //           plan.plId,
+                            //           editingVersionCodeValue
+                            //         );
+                            //       }
+                            //       setEditingVersionCodeIdx(null);
+                            //     }
+                            //   }}
+                            //   onKeyDown={(e) => {
+                            //     if (e.key === "Enter") {
+                            //       if (
+                            //         editingVersionCodeValue !==
+                            //         plan.versionCode
+                            //       ) {
+                            //         handleVersionCodeChange(
+                            //           plan.plId,
+                            //           editingVersionCodeValue
+                            //         );
+                            //       }
+                            //       setEditingVersionCodeIdx(null);
+                            //     } else if (e.key === "Escape") {
+                            //       setEditingVersionCodeIdx(null);
+                            //       setEditingVersionCodeValue(
+                            //         plan.versionCode || ""
+                            //       );
+                            //     }
+                            //   }}
+                            //   className={`border border-gray-300 rounded px-2 py-1 w-20 text-xs hover:border-blue-500 focus:border-blue-500 focus:outline-none ${
+                            //     !plan.plType || !plan.version
+                            //       ? "bg-gray-100 cursor-not-allowed"
+                            //       : "bg-white"
+                            //   }`}
+                            //   disabled={!plan.plType || !plan.version}
+                            // />
+                             <input
                               type="text"
                               value={
                                 editingVersionCodeIdx === plan.plId
@@ -3195,6 +2082,7 @@ const getActionOptions = (plan) => {
                               }`}
                               disabled={!plan.plType || !plan.version}
                             />
+ 
                           ) : typeof plan[col] === "boolean" ? (
                             <input
                               type="checkbox"
