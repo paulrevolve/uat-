@@ -232,9 +232,9 @@ const SpendChart = ({ fullApiResponse }) => {
                       No Spend Chart data available.
                   </div>
               )}
-              <p className="text-xs text-blue-500 mt-2">
+              {/* <p className="text-xs text-blue-500 mt-2">
                   This data is currently simulated for display purposes.
-              </p>
+              </p> */}
             </div>
         </div>
     );

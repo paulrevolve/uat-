@@ -27,17 +27,17 @@ const GENERAL_COSTS = 'GENERAL-COSTS';
 
 const SECTION_LABELS = {
     // GRAND: 'GRAND TOTAL',
-    REVENUE_SECTION: '1 - Total Revenue (REVENUE)',
-    INDIRECT_SECTION: 'Calculated Indirect',
+    REVENUE_SECTION: ' Revenue (REVENUE)',
+    INDIRECT_SECTION: ' Indirect',
     FRINGE: '1. Fringe',
     OVERHEAD: '2. Overhead',
     MANDH: '3. Mat & Handling',
     GNA: '4. General & Admin',
-    LABOR: 'Total - 2 - Sumaria Labor Onsite (LABOR)',
-    'UNALLOW-LABOR': 'Total - 2 - Sumaria Labor Onsite (UNALLOW-LABOR)',
-    'NON-LABOR-TRAVEL': 'Total - 5 - Sumaria Travel (NON-LABOR)',
-    'NON-LABOR-SUBCON': 'Total - 6 - Subcontractors (LABOR)',
-    'UNALLOW-SUBCON': 'Total - 6 - Subcontractors (UNALLOW-LABOR)',
+    LABOR: 'Sumaria Labor Onsite (LABOR)',
+    'UNALLOW-LABOR': 'Sumaria Labor Onsite (NON-Billable)',
+    'NON-LABOR-TRAVEL': 'Sumaria Travel (NON-LABOR)',
+    'NON-LABOR-SUBCON': 'Subcontractors (LABOR)',
+    'UNALLOW-SUBCON': 'Subcontractors (NON-Billable)',
     [GENERAL_COSTS]: '7 - Other Unclassified Direct Costs (Hidden)', 
 };
 // CRITICAL FIX: Remove GENERAL_COSTS from the displayed SECTION_KEYS
@@ -134,11 +134,11 @@ const transformData = (detailData, headerData) => {
                 id: detailRowKey,
                 project: item.projId,
                 acctId: item.acctId,
-                org: item.orgId || 'N/A', 
+                org: item.orgId , 
                 accountName: item.l1_acct_name || item.poolName || 'Unknown Pool', 
-                projectName: item.proj_name || item.projId,
-                popStartDate: item.popStartDate || item.proj_start_dt || 'N/A',
-                popEndDate: item.popEndDate || item.proj_end_dt || 'N/A',
+                projectName: item.proj_name ,
+                popStartDate: item.popStartDate || item.proj_start_dt  ,
+                popEndDate: item.popEndDate || item.proj_end_dt ,
                 parentProject: null,
                 section: section, 
                 subTotTypeNo: subTotTypeNo, 
@@ -273,11 +273,11 @@ const ForecastReport = () => {
                     id: groupKey,
                     project: rollupId, 
                     // projectName: `Total - ${rollupId}`,
-                    org: item.org || item.orgId || 'N/A',
+                    org: item.org || item.orgId || '',
                     acctId: null, 
                     // accountName: SECTION_LABELS[groupSection] , 
-                    popStartDate: item.popStartDate || item.proj_start_dt || 'N/A',
-                    popEndDate: item.popEndDate || item.proj_end_dt || 'N/A',
+                    popStartDate: item.popStartDate || item.proj_start_dt || '',
+                    popEndDate: item.popEndDate || item.proj_end_dt || '',
                     isRollupParent: true,
                     'FY-Total': 0,
                     section: groupSection, 
@@ -483,7 +483,7 @@ const ForecastReport = () => {
                                 {!isGrandTotal && (
                                     <FaCaretRight className={`w-3 h-3 transition-transform ${expandedSections[sectionKey] ? 'rotate-90' : ''}`} />
                                 )}
-                                <span>{isGrandTotal || isRevenueOrIndirect ? '' : 'TOTAL'}</span>
+                                {/* <span>{isGrandTotal || isRevenueOrIndirect ? '' : 'TOTAL'}</span> */}
                             </div>
                         );
                     } else if (header.key === 'projectName') {

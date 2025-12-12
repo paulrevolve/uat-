@@ -644,9 +644,9 @@ const FinancialDashboard = ({ planId, templateId, type }) => {
               <button className={getTabClasses('utilization')} onClick={() => setActiveTab('utilization')}>
                 👥 Utilization
               </button>
-              <button className={getTabClasses('overview')} onClick={() => setActiveTab('overview')}>
+              {/* <button className={getTabClasses('overview')} onClick={() => setActiveTab('overview')}>
                 📈 Overview
-              </button>
+              </button> */}
 
                <div className="flex flex-wrap gap-3">
               {/* <button
