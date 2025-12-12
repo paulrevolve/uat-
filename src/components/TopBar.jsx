@@ -1,4 +1,5 @@
 import React from "react";
+import logo from "../assets/logo.png";
 
 function TopBar({ name, onLogout }) {
   return (
@@ -8,6 +9,13 @@ function TopBar({ name, onLogout }) {
       </h2>
       <div className="flex items-center gap-4">
         {/* <span className="text-xl font-semibold text-white">{name}</span> */}
+      
+                  <img
+                    src={logo}   // put your logo path here
+                    alt="Sumaria Systems"
+                    className="h-8 w-40"
+                  />
+               
       </div>
       <div className="flex items-center gap-4">
         <span className="text-xl font-semibold text-white">{name}</span>
