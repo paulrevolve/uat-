@@ -708,51 +708,7 @@ const ForecastReport = () => {
             
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Forecast Report</h2>
 
-            {/* Filters and Search Bar */}
-            <div className="bg-white p-4 rounded-lg shadow-md mb-6 sticky top-0 z-20">
-                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                    <h3 className="text-lg font-semibold text-gray-700">Filters & Search</h3>
-                    <button 
-                        onClick={() => setIsFilterCollapsed(!isFilterCollapsed)}
-                        className="p-1 rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
-                        title={isFilterCollapsed ? "Expand Filters" : "Collapse Filters"}
-                    >
-                        <FaChevronUp className={isFilterCollapsed ? 'rotate-180' : ''} />
-                    </button>
-                </div>
-                
-                <div className={`transition-max-height duration-300 ease-in-out overflow-hidden ${isFilterCollapsed ? 'max-h-0' : 'max-h-96 pt-4'}`}>
-                    <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
-                        <div className="relative flex-1 max-w-lg">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Project ID / Project Name</label>
-                            <input
-                                type="text"
-                                placeholder="Search project ID or name..."
-                                value={projectSearchTerm}
-                                onChange={(e) => setProjectSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <FaSearch className="absolute left-3 top-1/2 mt-3 transform -translate-y-1/2 text-gray-400" />
-                        </div>
-                        
-                        <div className="relative flex-1 max-w-xs">
-                            <label htmlFor="close-period-select" className="block text-xs font-medium text-gray-500 mb-1">Close Period</label>
-                            <select
-                                id="close-period-select"
-                                value={closePeriodFilter}
-                                onChange={(e) => setClosePeriodFilter(e.target.value)}
-                                className="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                            >
-                                {CLOSE_PERIODS.map(period => (
-                                    <option key={period} value={period}>{period}</option>
-                                ))}
-                            </select>
-                            <FaChevronDown className="absolute right-3 top-1/2 mt-3 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            
             {/* Pagination Controls */}
             <div className="flex justify-between items-center bg-white p-2 rounded-lg shadow-md mb-4">
                 <span className="text-sm text-gray-600">

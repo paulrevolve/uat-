@@ -642,7 +642,7 @@ const FinancialDashboard = ({ planId, templateId, type }) => {
                 💰 Spend Analysis
               </button>
               <button className={getTabClasses('utilization')} onClick={() => setActiveTab('utilization')}>
-                👥 Utilization
+                👥 Labor Utilization
               </button>
               {/* <button className={getTabClasses('overview')} onClick={() => setActiveTab('overview')}>
                 📈 Overview
