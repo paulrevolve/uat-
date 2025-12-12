@@ -311,9 +311,9 @@ const NavigationSidebar = () => {
                           handleLinkClick("/dashboard/pool-rate-tabs");
                         }}
                       >
-                        Pool Rate Configuration
+                       Forward Rate
                       </Link>
-                      <div
+                      {/* <div
                         className="flex justify-between items-center cursor-pointer hover:bg-gray-800 px-2 py-1 rounded-md transition ease-in-out duration-200"
                         onClick={() => setPoolMappingOpen(!poolMappingOpen)}
                       >
@@ -323,9 +323,9 @@ const NavigationSidebar = () => {
                         ) : (
                           <ChevronRight className="w-3 sm:w-3 h-3 sm:h-3" />
                         )}
-                      </div>
+                      </div> */}
 
-                      {poolMappingOpen && (
+                      {/* {poolMappingOpen && (
                         <div className="ml-3 mt-1 pl-1 border-l border-gray-600 space-y-1">
                           <Link
                             to="/dashboard/pool-configuration"
@@ -359,7 +359,7 @@ const NavigationSidebar = () => {
                             Template Pool Mapping
                           </Link>
                         </div>
-                      )}
+                      )} */}
                       <Link
                         to="/dashboard/ceiling-configuration"
                         className={`block text-xs text-gray-200 hover:text-white hover:bg-gray-800 px-2 py-1 rounded transition ease-in-out duration-200 ${
@@ -374,7 +374,7 @@ const NavigationSidebar = () => {
                       >
                         Ceiling Configuration
                       </Link>
-                      <Link
+                      {/* <Link
                         to="/dashboard/template"
                         className={`block text-xs text-gray-200 hover:text-white hover:bg-gray-800 px-2 py-1 rounded transition ease-in-out duration-200 ${
                           selectedPage === "/dashboard/template"
@@ -387,7 +387,7 @@ const NavigationSidebar = () => {
                         }}
                       >
                         Burden Setup
-                      </Link>
+                      </Link> */}
                       <Link
                         to="/dashboard/global-configuration"
                         className={`block text-xs text-gray-200 hover:text-white  hover:bg-gray-800 px-2 py-1 rounded transition ease-in-out duration-200 ${
