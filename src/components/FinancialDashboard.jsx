@@ -629,43 +629,10 @@ const FinancialDashboard = ({ planId, templateId, type }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-0"> {/* FULL BLEED */}
       {/* *** FULL WIDTH HEADER WITH EXPORT BUTTONS *** */}
-      <div className="bg-white/80 backdrop-blur-md border-b-2 border-gray-200 sticky top-0 z-50 shadow-xl">
-        <div className="max-w-full mx-auto px-6 py-6">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                Financial Dashboard
-              </h1>
-              {/* <p className="text-xl text-gray-600 font-medium">Comprehensive financial analysis & forecasting</p> */}
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {/* <button
-                onClick={exportToPdf}
-                className="flex items-center gap-2 px-6 py-3 text-lg font-bold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-xl hover:from-red-600 hover:to-red-700 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300 border-2 border-red-400 disabled:opacity-50"
-                title="Export current tab to PDF (Landscape)"
-                disabled={loading || error}
-              >
-                <FaFilePdf className="w-5 h-5" /> PDF Export
-              </button> */}
-              
-              {/* {activeTab === 'forecast' && (
-                <button
-                  onClick={handleExportForecastXlsx}
-                  className="flex items-center gap-2 px-6 py-3 text-lg font-bold text-white bg-gradient-to-r from-green-500 to-green-600 rounded-xl hover:from-green-600 hover:to-green-700 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300 border-2 border-green-400 disabled:opacity-50"
-                  title="Export Forecast data to Excel"
-                >
-                  <FaFileExcel className="w-5 h-5" /> Excel Export
-                </button>
-              )} */}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div id="financial-dashboard-content" className="min-h-screen"> 
 
         {/* *** FULL WIDTH TABS *** */}
-        <div className="bg-white/90 backdrop-blur-md border-b-2 border-gray-200 shadow-lg sticky z-40 top-[140px] lg:top-[120px]">
+        <div className="bg-white/90 backdrop-blur-md border-b-2 border-gray-200 shadow-lg sticky z-40    ">
           <div className="max-w-full mx-auto px-6 py-1">
             <div className="flex border-b border-transparent overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               <button className={getTabClasses('forecast')} onClick={() => setActiveTab('forecast')}>
@@ -680,6 +647,27 @@ const FinancialDashboard = ({ planId, templateId, type }) => {
               <button className={getTabClasses('overview')} onClick={() => setActiveTab('overview')}>
                 📈 Overview
               </button>
+
+               <div className="flex flex-wrap gap-3">
+              {/* <button
+                onClick={exportToPdf}
+                className="flex items-center gap-2 px-6 py-3 text-lg font-bold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-xl hover:from-red-600 hover:to-red-700 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300 border-2 border-red-400 disabled:opacity-50"
+                title="Export current tab to PDF (Landscape)"
+                disabled={loading || error}
+              >
+                <FaFilePdf className="w-5 h-5" /> PDF Export
+              </button> */}
+              
+              {/* {activeTab === 'forecast' && (
+                <button
+                  onClick={handleExportForecastXlsx}
+                  className="flex items-center gap-2 px-2 py-1 text-lg font-bold text-white bg-gradient-to-r from-green-500 to-green-600 rounded-xl hover:from-green-600 hover:to-green-700 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300 border-2 border-green-400 disabled:opacity-50"
+                  title="Export Forecast data to Excel"
+                >
+                  <FaFileExcel className="w-5 h-5" /> Excel Export
+                </button>
+              )} */}
+            </div>
             </div>
           </div>
         </div>
