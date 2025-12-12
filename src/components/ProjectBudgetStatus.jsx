@@ -605,7 +605,7 @@ const ProjectBudgetStatus = () => {
             </span>
             {currentUserRole === "admin" && (
               <>
-                <span
+                {/* <span
                   className={`btn ${
                     activeTab === "revenueAnalysis"
                       ? "btn-active"
@@ -614,7 +614,7 @@ const ProjectBudgetStatus = () => {
                   onClick={() => handleTabClick("revenueAnalysis")}
                 >
                   Revenue Details
-                </span>
+                </span> */}
                 <span
                   className={`btn ${
                     activeTab === "analysisByPeriod"
