@@ -739,9 +739,14 @@ const PoolRate = ({ userName = "User" }) => {
                   <table className="table">
                     <thead className="thead">
                       <tr>
-                        <th className="th-thead w-[80px]">Month</th>
+                        <th className="th-thead  w-[80px]">Month</th>
                         {pools.map((pool) => (
-                          <th key={pool.poolId} className="th-thead  w-[60px]">
+                          <th key={pool.poolId}
+                          className={`th-thead w-[60px] ${pool.groupName.toLowerCase() === "hr" ? "uppercase" : ""}`}
+
+                        
+                        // className="th-thead uppercase w-[60px]"
+                        >
                             {pool.groupName}
                           </th>
                         ))}
