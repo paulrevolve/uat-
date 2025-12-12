@@ -432,7 +432,7 @@ const ProjectBudgetStatus = () => {
     }
   };
   const handleTabClick = (tabName) => {
-    if (!selectedPlan) {
+    if (tabName !== "dashboard" && !selectedPlan) {
       toast.info("Please select a plan first.", {
         toastId: "no-plan-selected",
         autoClose: 3000,
@@ -717,17 +717,16 @@ const ProjectBudgetStatus = () => {
 
         {/* Dashboard Tab */}
         {activeTab === "dashboard" &&
-          selectedPlan &&
           currentUserRole === "admin" && (
             <div
               className="relative  p-2 sm:p-4 border-line min-h-[150px] scroll-mt-16"
               ref={(el) => (dashboardRefs.current[searchTerm] = el)}
             >
-              <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-lg shadow-sm mb-4 relative">
+              <div className="relative">
                 <button
                   className="absolute top-2 right-2 blue-text hover:text-red-500 text-xl z-20 cursor-pointer bg-white bg-opacity-80 rounded-full p-0.5 transition-shadow shadow"
                   onClick={handleCloseTab}
-                  title="Close project details"
+                  title="Close dashboard"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -744,7 +743,7 @@ const ProjectBudgetStatus = () => {
                     />
                   </svg>
                 </button>
-                <div className="flex flex-wrap gap-x-2 gap-y-2 text-xs">
+                {/* <div className="flex flex-wrap gap-x-2 gap-y-2 text-xs">
                   <span>
                     <span className="font-semibold blue-text">
                       Project ID:{" "}
@@ -763,12 +762,12 @@ const ProjectBudgetStatus = () => {
                     <span className="font-semibold blue-text">Status: </span>
                     {selectedPlan.status || "N/A"}
                   </span>
-                </div>
+                </div> */}
               </div>
               <FinancialDashboard
-                planId={selectedPlan.plId}
-                templateId={selectedPlan.templateId}
-                type={selectedPlan.plType}
+                // planId={selectedPlan.plId}
+                // templateId={selectedPlan.templateId}
+                // type={selectedPlan.plType}
               />
             </div>
           )}
