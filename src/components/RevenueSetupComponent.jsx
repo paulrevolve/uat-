@@ -29,6 +29,8 @@ const RevenueSetupComponent = ({ selectedPlan, revenueAccount }) => {
     useState(false);
   const [useFixedRevenueFl, setUseFixedRevenueFl] = useState(false);
   const [setupId, setSetupId] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -161,68 +163,141 @@ const RevenueSetupComponent = ({ selectedPlan, revenueAccount }) => {
     }
   }, [selectedPlan, revenueAccount,backendUrl]);
 
+  // const handleSave = () => {
+  //   if (!revenueFormula || revenueFormula === "") {
+  //     toast.error("Please select revenue formula", {
+  //       toastId: "revenue-setup-save-select",
+  //       autoClose: 3000,
+  //     });
+  //     return;
+  //   }
+  //   const payload = {
+  //     id: setupId,
+  //     projId: selectedPlan?.projId || "",
+  //     revType: revenueFormula, // Modified: Use revenueFormula instead of revenueType
+  //     revAcctId: revenueAccountState,
+  //     dfltFeeRt: parseFloat(labFeeRt) || 0,
+  //     labCostFl,
+  //     labBurdFl,
+  //     labFeeCostFl,
+  //     labFeeHrsFl,
+  //     labFeeRt: parseFloat(labFeeRt) || 0,
+  //     labTmFl,
+  //     nonLabCostFl,
+  //     nonLabBurdFl,
+  //     nonLabFeeCostFl,
+  //     nonLabFeeHrsFl,
+  //     nonLabFeeRt: parseFloat(nonLabFeeRt) || 0,
+  //     nonLabTmFl,
+  //     useBillBurdenRates: overrideRevAdjustmentsFl,
+  //     overrideFundingCeilingFl,
+  //     overrideRevAmtFl: useFixedRevenueFl,
+  //     overrideRevAdjFl: true,
+  //     overrideRevSettingFl: overrideSettingsFl,
+  //     rowVersion: 0,
+  //     modifiedBy: "user",
+  //     timeStamp: new Date().toISOString(),
+  //     companyId: "company",
+  //     // atRiskAmt: parseFloat(atRiskValue) || 0,
+  //     atRiskAmt: parseFloat(atRiskValue.replace(/,/g, "")) || 0,
+  //     versionNo: selectedPlan?.version || 0,
+  //     bgtType: selectedPlan?.plType || "",
+  //   };
+
+  //   axios
+  //     .post(`${backendUrl}/ProjBgtRevSetup/upsert`, payload)
+  //     .then((response) => {
+  //       // console.log("Save successful:", response.data);
+  //       toast.success("Data saved successfully!", {
+  //         toastId: "revenue-setup-save-success",
+  //         autoClose: 3000,
+  //       });
+  //     })
+  //     .catch((error) => {
+  //       // console.error("Error saving data:", error);
+  //       toast.error(
+  //         "Failed to save data: " +
+  //           (error.response?.data?.message || error.message),
+  //         {
+  //           toastId: "revenue-setup-save-error",
+  //           autoClose: 3000,
+  //         }
+  //       );
+  //     });
+  // };
+
   const handleSave = () => {
-    if (!revenueFormula || revenueFormula === "") {
-      toast.error("Please select revenue formula", {
-        toastId: "revenue-setup-save-select",
+  if (!revenueFormula || revenueFormula === "") {
+    toast.error("Please select revenue formula", {
+      toastId: "revenue-setup-save-select",
+      autoClose: 3000,
+    });
+    return;
+  }
+
+  const payload = {
+    id: setupId,
+    projId: selectedPlan?.projId || "",
+    revType: revenueFormula,
+    revAcctId: revenueAccountState,
+    dfltFeeRt: parseFloat(labFeeRt) || 0,
+    labCostFl,
+    labBurdFl,
+    labFeeCostFl,
+    labFeeHrsFl,
+    labFeeRt: parseFloat(labFeeRt) || 0,
+    labTmFl,
+    nonLabCostFl,
+    nonLabBurdFl,
+    nonLabFeeCostFl,
+    nonLabFeeHrsFl,
+    nonLabFeeRt: parseFloat(nonLabFeeRt) || 0,
+    nonLabTmFl,
+    useBillBurdenRates: overrideRevAdjustmentsFl,
+    overrideFundingCeilingFl,
+    overrideRevAmtFl: useFixedRevenueFl,
+    overrideRevAdjFl: true,
+    overrideRevSettingFl: overrideSettingsFl,
+    rowVersion: 0,
+    modifiedBy: "user",
+    timeStamp: new Date().toISOString(),
+    companyId: "company",
+    atRiskAmt: parseFloat(atRiskValue.replace(/,/g, "")) || 0,
+    versionNo: selectedPlan?.version || 0,
+    bgtType: selectedPlan?.plType || "",
+  };
+
+  setIsSaving(true);
+  toast.info("Saving revenue setup...", {
+    toastId: "revenue-setup-saving",
+    autoClose: false,
+  });
+
+  axios
+    .post(`${backendUrl}/ProjBgtRevSetup/upsert`, payload)
+    .then((response) => {
+      toast.dismiss("revenue-setup-saving");
+      toast.success("Data saved successfully!", {
+        toastId: "revenue-setup-save-success",
         autoClose: 3000,
       });
-      return;
-    }
-    const payload = {
-      id: setupId,
-      projId: selectedPlan?.projId || "",
-      revType: revenueFormula, // Modified: Use revenueFormula instead of revenueType
-      revAcctId: revenueAccountState,
-      dfltFeeRt: parseFloat(labFeeRt) || 0,
-      labCostFl,
-      labBurdFl,
-      labFeeCostFl,
-      labFeeHrsFl,
-      labFeeRt: parseFloat(labFeeRt) || 0,
-      labTmFl,
-      nonLabCostFl,
-      nonLabBurdFl,
-      nonLabFeeCostFl,
-      nonLabFeeHrsFl,
-      nonLabFeeRt: parseFloat(nonLabFeeRt) || 0,
-      nonLabTmFl,
-      useBillBurdenRates: overrideRevAdjustmentsFl,
-      overrideFundingCeilingFl,
-      overrideRevAmtFl: useFixedRevenueFl,
-      overrideRevAdjFl: true,
-      overrideRevSettingFl: overrideSettingsFl,
-      rowVersion: 0,
-      modifiedBy: "user",
-      timeStamp: new Date().toISOString(),
-      companyId: "company",
-      // atRiskAmt: parseFloat(atRiskValue) || 0,
-      atRiskAmt: parseFloat(atRiskValue.replace(/,/g, "")) || 0,
-      versionNo: selectedPlan?.version || 0,
-      bgtType: selectedPlan?.plType || "",
-    };
-
-    axios
-      .post(`${backendUrl}/ProjBgtRevSetup/upsert`, payload)
-      .then((response) => {
-        // console.log("Save successful:", response.data);
-        toast.success("Data saved successfully!", {
-          toastId: "revenue-setup-save-success",
+    })
+    .catch((error) => {
+      toast.dismiss("revenue-setup-saving");
+      toast.error(
+        "Failed to save data: " +
+          (error.response?.data?.message || error.message),
+        {
+          toastId: "revenue-setup-save-error",
           autoClose: 3000,
-        });
-      })
-      .catch((error) => {
-        // console.error("Error saving data:", error);
-        toast.error(
-          "Failed to save data: " +
-            (error.response?.data?.message || error.message),
-          {
-            toastId: "revenue-setup-save-error",
-            autoClose: 3000,
-          }
-        );
-      });
-  };
+        }
+      );
+    })
+    .finally(() => {
+      setIsSaving(false);
+    });
+};
+
 
   return (
     <div className=" p-2 sm:p-4 bg-gray rounded shadow min-h-[150px] scroll-mt-16">
@@ -493,12 +568,19 @@ const RevenueSetupComponent = ({ selectedPlan, revenueAccount }) => {
           </table>
         </div>
         <div className="flex justify-end w-full">
-          <button
+          {/* <button
             className="bg-blue-500 text-white px-4 py-2 rounded text-sm font-normal mt-4 cursor-pointer w-25"
             onClick={handleSave}
           >
             Save
-          </button>
+          </button> */}
+          <button
+  className="bg-blue-500 text-white px-4 py-2 rounded text-sm font-normal mt-4 cursor-pointer w-25 disabled:opacity-60"
+  onClick={handleSave}
+  disabled={isSaving}
+>
+  {isSaving ? "Saving..." : "Save"}
+</button>
         </div>
       </div>
     </div>
