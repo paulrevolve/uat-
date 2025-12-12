@@ -329,7 +329,7 @@ const Rates = () => {
       setError(null);
 
       const response = await fetch(
-        `${backendUrl}/Orgnization/GetRates?fycd=${year}`
+        `${backendUrl}/Orgnization/GetRatesV2?fycd=${year}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch pool rates");
