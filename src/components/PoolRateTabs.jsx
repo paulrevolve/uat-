@@ -46,7 +46,7 @@ const PoolRateTabs = () => {
   return (
     <div className="border-overall bg-white p-4">
       <h2 className="text-lg font-semibold mb-4 blue-text">
-        Pool Rate Configuration
+        Forward Rate
       </h2>
 
       {/* Tab header */}
