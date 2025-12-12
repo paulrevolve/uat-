@@ -182,7 +182,7 @@ const UtilizationChart = () => {
     return (
         <div className="p-4 bg-white rounded-lg shadow">
             <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
-                Utilization Chart 
+                Labor Utilization Chart 
             </h2>
             
             <div id="utilization-chart" style={{ height: '500px', width: '100%' }}>
