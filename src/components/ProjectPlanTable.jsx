@@ -1017,23 +1017,59 @@ const handleRowClick = (plan) => {
 
   // FIXED: Updated handleActionSelect to use the full project ID
 
-  const handleVersionCodeChange = async (idx, value) => {
+  // const handleVersionCodeChange = async (idx, value) => {
+  //   const prevPlans = [...plans];
+  //   const currentPlan = plans[idx];
+  //   const planId = currentPlan.plId;
+
+  //   // Check if value actually changed
+  //   if (currentPlan.versionCode === value) {
+  //     return; // No change, don't call API
+  //   }
+
+  //   let updated = { ...currentPlan, versionCode: value };
+  //   const newPlans = plans.map((plan) =>
+  //     plan.plId === planId ? updated : plan
+  //   );
+  //   setPlans(newPlans);
+
+  //   if (planId && Number(planId) > 0) {
+  //     const updateUrl = `${backendUrl}/Project/UpdateProjectPlan`;
+  //     toast.info("Updating version code...", { toastId: "version-code-info" });
+  //     try {
+  //       setIsActionLoading(true);
+  //       await axios.put(updateUrl, updated);
+  //       toast.success("Version code updated successfully!", {
+  //         toastId: "version-code-success",
+  //       });
+  //     } catch (err) {
+  //       setPlans(prevPlans);
+  //       toast.error(
+  //         "Error updating version code: " +
+  //           (err.response?.data?.message || err.message),
+  //         { toastId: "version-code-error" }
+  //       );
+  //     } finally {
+  //       setIsActionLoading(false);
+  //     }
+  //   }
+  // };
+    const handleVersionCodeChange = async (plId, value) => {
     const prevPlans = [...plans];
-    const currentPlan = plans[idx];
-    const planId = currentPlan.plId;
-
-    // Check if value actually changed
+    const currentPlan = plans.find(p => p.plId === plId);
+    if (!currentPlan) return;
+ 
     if (currentPlan.versionCode === value) {
-      return; // No change, don't call API
+      return;
     }
-
+ 
     let updated = { ...currentPlan, versionCode: value };
     const newPlans = plans.map((plan) =>
-      plan.plId === planId ? updated : plan
+      plan.plId === plId ? updated : plan
     );
     setPlans(newPlans);
-
-    if (planId && Number(planId) > 0) {
+ 
+    if (plId && Number(plId) > 0) {
       const updateUrl = `${backendUrl}/Project/UpdateProjectPlan`;
       toast.info("Updating version code...", { toastId: "version-code-info" });
       try {
@@ -3104,14 +3140,14 @@ const getActionOptions = (plan) => {
                             <input
                               type="text"
                               value={
-                                editingVersionCodeIdx === idx
+                                editingVersionCodeIdx === plan.plId
                                   ? editingVersionCodeValue
                                   : plan.versionCode || ""
                               }
-                              autoFocus={editingVersionCodeIdx === idx}
+                              autoFocus={editingVersionCodeIdx === plan.plId}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setEditingVersionCodeIdx(idx);
+                                setEditingVersionCodeIdx(plan.plId);
                                 setEditingVersionCodeValue(
                                   plan.versionCode || ""
                                 );
@@ -3120,12 +3156,13 @@ const getActionOptions = (plan) => {
                                 setEditingVersionCodeValue(e.target.value)
                               }
                               onBlur={() => {
-                                if (editingVersionCodeIdx === idx) {
+                                if (editingVersionCodeIdx === plan.plId) {
                                   if (
-                                    editingVersionCodeValue !== plan.versionCode
+                                    editingVersionCodeValue !==
+                                    plan.versionCode
                                   ) {
                                     handleVersionCodeChange(
-                                      idx,
+                                      plan.plId,
                                       editingVersionCodeValue
                                     );
                                   }
@@ -3135,10 +3172,11 @@ const getActionOptions = (plan) => {
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   if (
-                                    editingVersionCodeValue !== plan.versionCode
+                                    editingVersionCodeValue !==
+                                    plan.versionCode
                                   ) {
                                     handleVersionCodeChange(
-                                      idx,
+                                      plan.plId,
                                       editingVersionCodeValue
                                     );
                                   }
