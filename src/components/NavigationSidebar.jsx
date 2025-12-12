@@ -20,7 +20,8 @@ const NavigationSidebar = () => {
       pathname.includes("/dashboard/prospective-id-setup") ||
       pathname.includes("/dashboard/display-settings") ||
       pathname.includes("/dashboard/annual-holidays") ||
-      pathname.includes("/dashboard/maintain-fiscal-year-periods")
+      pathname.includes("/dashboard/maintain-fiscal-year-periods") ||
+      pathname.includes("/dashboard/analog-rate")  
   );
   const [planningOpen, setPlanningOpen] = useState(
     pathname.includes("/dashboard/project-budget-status") ||
@@ -37,6 +38,8 @@ const NavigationSidebar = () => {
       pathname.includes("/dashboard/display-settings") ||
       pathname.includes("/dashboard/annual-holidays") ||
       pathname.includes("/dashboard/maintain-fiscal-year-periods")
+      ||
+      pathname.includes("/dashboard/analog-rate")  
   );
   const [poolMappingOpen, setPoolMappingOpen] = useState(
     pathname.includes("/dashboard/pool-configuration") ||
@@ -130,7 +133,7 @@ const NavigationSidebar = () => {
           pathname.includes("/dashboard/prospective-id-setup") ||
           pathname.includes("/dashboard/display-settings") ||
           pathname.includes("/dashboard/annual-holidays") ||
-          pathname.includes("/dashboard/maintain-fiscal-year-periods")
+          pathname.includes("/dashboard/maintain-fiscal-year-periods") || pathname.includes("/dashboard/analog-rate")  
       );
       setPlanningOpen(
         pathname.includes("/dashboard/project-budget-status") ||
@@ -146,7 +149,7 @@ const NavigationSidebar = () => {
           pathname.includes("/dashboard/prospective-id-setup") ||
           pathname.includes("/dashboard/display-settings") ||
           pathname.includes("/dashboard/annual-holidays") ||
-          pathname.includes("/dashboard/maintain-fiscal-year-periods")
+          pathname.includes("/dashboard/maintain-fiscal-year-periods") || pathname.includes("/dashboard/analog-rate")  
       );
       setPoolMappingOpen(
         pathname.includes("/dashboard/pool-configuration") ||
@@ -311,7 +314,35 @@ const NavigationSidebar = () => {
                           handleLinkClick("/dashboard/pool-rate-tabs");
                         }}
                       >
-                       Forward Rate
+                        Forward Rate
+                      </Link>
+                      <Link
+                        to="/dashboard/analog-rate"
+                        className={`block text-xs text-gray-200 hover:text-white hover:bg-gray-800 px-2 py-1 rounded transition ease-in-out duration-200 ${
+                          selectedPage === "/dashboard/analog-rate"
+                            ? "bg-gray-800"
+                            : ""
+                        }`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleLinkClick("/dashboard/analog-rate");
+                        }}
+                      >
+                        NBIs Analogous Rate
+                      </Link>
+                      <Link
+                        to="/dashboard/global-configuration"
+                        className={`block text-xs text-gray-200 hover:text-white  hover:bg-gray-800 px-2 py-1 rounded transition ease-in-out duration-200 ${
+                          selectedPage === "/dashboard/global-configuration"
+                            ? "bg-gray-800 "
+                            : ""
+                        }`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleLinkClick("/dashboard/global-configuration");
+                        }}
+                      >
+                        Settings
                       </Link>
                       {/* <div
                         className="flex justify-between items-center cursor-pointer hover:bg-gray-800 px-2 py-1 rounded-md transition ease-in-out duration-200"
@@ -374,6 +405,7 @@ const NavigationSidebar = () => {
                       >
                         Ceiling Configuration
                       </Link>
+                      
                       {/* <Link
                         to="/dashboard/template"
                         className={`block text-xs text-gray-200 hover:text-white hover:bg-gray-800 px-2 py-1 rounded transition ease-in-out duration-200 ${
@@ -388,20 +420,7 @@ const NavigationSidebar = () => {
                       >
                         Burden Setup
                       </Link> */}
-                      <Link
-                        to="/dashboard/global-configuration"
-                        className={`block text-xs text-gray-200 hover:text-white  hover:bg-gray-800 px-2 py-1 rounded transition ease-in-out duration-200 ${
-                          selectedPage === "/dashboard/global-configuration"
-                            ? "bg-gray-800 "
-                            : ""
-                        }`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleLinkClick("/dashboard/global-configuration");
-                        }}
-                      >
-                        Settings
-                      </Link>
+                      
                       <Link
                         to="/dashboard/prospective-id-setup"
                         className={`block text-xs text-gray-200 hover:text-white hover:bg-gray-800 px-2 py-1 rounded transition ease-in-out duration-200 ${

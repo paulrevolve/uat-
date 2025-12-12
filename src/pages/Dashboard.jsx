@@ -476,6 +476,7 @@ import MaintainFiscalYearPeriods from "../components/MaintainFiscalYearPeriods";
 import ChatBot from "../components/ChatBot";
 import TopBar from "../components/TopBar";
 import PoolRateTabs from "../components/PoolRateTabs";
+import AnalogRate from "../components/AnalogRate";
 
 const SIDEBAR_WIDTH = 190; // px
 const TOPBAR_HEIGHT = 45; // px
@@ -632,6 +633,15 @@ const Dashboard = () => {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <CeilingConfiguration />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analog-rate"
+            // element={<CeilingConfiguration />}
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AnalogRate/>
               </ProtectedRoute>
             }
           />

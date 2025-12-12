@@ -7505,7 +7505,7 @@ useEffect(() => {
                           </td>
 
                           {/* <td className="tbody-td min-w-[70px]">{row.name}</td> */}
-                          <td className="tbody-td min-w-[70px]">
+                          <td className="tbody-td min-w-[70px] text-left">
   {/* FIX: Check if we have an edited first name (PLC description) and display it, otherwise show original */}
   {editedData.firstName !== undefined 
     ? editedData.firstName 

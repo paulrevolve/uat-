@@ -782,66 +782,165 @@ const ProjectAmountsTable = ({
     //     );
     //   }
     // };
+
+    // const fetchNonLaborAccounts = async () => {
+    //   if (!projectId || !formOpen) {
+    //     setEmployeeNonLaborAccounts([]);
+    //     setSubContractorNonLaborAccounts([]);
+    //     return;
+    //   }
+
+    //   try {
+    //     // const response = await axios.get(
+    //     //   `${backendUrl}/Project/GetAllProjectByProjId/${projectId}`
+    //     // );
+    //     const response = await axios.get(
+    //       `${backendUrl}/Project/GetAllProjectByProjId/${projectId}/${planType}`
+    //     );
+
+    //     const data = Array.isArray(response.data)
+    //       ? response.data[0]
+    //       : response.data;
+
+    //     // -------------------------
+    //     // Employee Non-Labor Accounts
+    //     // -------------------------
+    //     let employeeAccounts = Array.isArray(data.employeeNonLaborAccounts)
+    //       ? data.employeeNonLaborAccounts.map((account) => ({
+    //           id: account.accountId || account, // handle both object/string
+    //           name: account.acctName || account.accountId || String(account),
+    //         }))
+    //       : [];
+
+    //     // Deduplicate employee accounts
+    //     const uniqueEmployeeMap = new Map();
+    //     employeeAccounts.forEach((acc) => {
+    //       if (acc.id && !uniqueEmployeeMap.has(acc.id)) {
+    //         uniqueEmployeeMap.set(acc.id, acc);
+    //       }
+    //     });
+    //     const uniqueEmployeeAccounts = Array.from(uniqueEmployeeMap.values());
+    //     setEmployeeNonLaborAccounts(uniqueEmployeeAccounts);
+
+    //     // -------------------------
+    //     // SubContractor Non-Labor Accounts
+    //     // -------------------------
+    //     let subAccounts = Array.isArray(data.subContractorNonLaborAccounts)
+    //       ? data.subContractorNonLaborAccounts.map((account) => ({
+    //           id: account.accountId || account,
+    //           name: account.acctName || account.accountId || String(account),
+    //         }))
+    //       : [];
+
+    //     // Deduplicate subcontractor accounts
+    //     const uniqueSubMap = new Map();
+    //     subAccounts.forEach((acc) => {
+    //       if (acc.id && !uniqueSubMap.has(acc.id)) {
+    //         uniqueSubMap.set(acc.id, acc);
+    //       }
+    //     });
+    //     const uniqueSubAccounts = Array.from(uniqueSubMap.values());
+    //     setSubContractorNonLaborAccounts(uniqueSubAccounts);
+
+    //     // Other Direct Cost Non-Labor Accounts
+    // let otherAccounts = Array.isArray(data.otherDirectCostNonLaborAccounts)
+    //   ? data.otherDirectCostNonLaborAccounts.map((account) => ({
+    //       id: account.accountId || account,
+    //       name: account.acctName || account.accountId || String(account),
+    //     }))
+    //   : [];
+    
+    // const uniqueOtherMap = new Map();
+    // otherAccounts.forEach((acc) => {
+    //   if (acc.id && !uniqueOtherMap.has(acc.id)) {
+    //     uniqueOtherMap.set(acc.id, acc);
+    //   }
+    // });
+    // const uniqueOtherAccounts = Array.from(uniqueOtherMap.values());
+    // setOtherDirectCostNonLaborAccounts(uniqueOtherAccounts);
+
+    //     let allAccountsWithNames = [
+    //       ...uniqueEmployeeAccounts,
+    //       ...uniqueSubAccounts,
+    //       ...uniqueOtherAccounts, 
+    //     ];
+    //     setAccountOptionsWithNames(allAccountsWithNames);
+    //   } catch (err) {
+    //     // console.error("Error fetching non-labor accounts:", err);
+    //     setEmployeeNonLaborAccounts([]);
+    //     setSubContractorNonLaborAccounts([]);
+    //     if (planType?.toUpperCase() !== "NBBUD") {
+    //       toast.error("Failed to fetch non-labor accounts", {
+    //         toastId: "non-labor-accounts-error",
+    //         autoClose: 3000,
+    //       });
+    //     }
+    //   }
+
+
+    // };
+
     const fetchNonLaborAccounts = async () => {
-      if (!projectId || !formOpen) {
-        setEmployeeNonLaborAccounts([]);
-        setSubContractorNonLaborAccounts([]);
-        return;
+  if (!projectId || !formOpen) {
+    setEmployeeNonLaborAccounts([]);
+    setSubContractorNonLaborAccounts([]);
+    setNonLaborAccounts([]);
+    return;
+  }
+
+  try {
+    // const response = await axios.get(
+    //   `${backendUrl}/Project/GetAllProjectByProjId/${projectId}`
+    // );
+    const response = await axios.get(
+      `${backendUrl}/Project/GetAllProjectByProjId/${projectId}/${planType}`
+    );
+
+    const data = Array.isArray(response.data)
+      ? response.data[0]
+      : response.data;
+
+    // -------------------------
+    // Employee Non-Labor Accounts
+    // -------------------------
+    let employeeAccounts = Array.isArray(data.employeeNonLaborAccounts)
+      ? data.employeeNonLaborAccounts.map((account) => ({
+          id: account.accountId || account, // handle both object/string
+          name: account.acctName || account.accountId || String(account),
+        }))
+      : [];
+
+    // Deduplicate employee accounts
+    const uniqueEmployeeMap = new Map();
+    employeeAccounts.forEach((acc) => {
+      if (acc.id && !uniqueEmployeeMap.has(acc.id)) {
+        uniqueEmployeeMap.set(acc.id, acc);
       }
+    });
+    const uniqueEmployeeAccounts = Array.from(uniqueEmployeeMap.values());
+    setEmployeeNonLaborAccounts(uniqueEmployeeAccounts);
 
-      try {
-        // const response = await axios.get(
-        //   `${backendUrl}/Project/GetAllProjectByProjId/${projectId}`
-        // );
-        const response = await axios.get(
-          `${backendUrl}/Project/GetAllProjectByProjId/${projectId}/${planType}`
-        );
+    // -------------------------
+    // SubContractor Non-Labor Accounts
+    // -------------------------
+    let subAccounts = Array.isArray(data.subContractorNonLaborAccounts)
+      ? data.subContractorNonLaborAccounts.map((account) => ({
+          id: account.accountId || account,
+          name: account.acctName || account.accountId || String(account),
+        }))
+      : [];
 
-        const data = Array.isArray(response.data)
-          ? response.data[0]
-          : response.data;
+    // Deduplicate subcontractor accounts
+    const uniqueSubMap = new Map();
+    subAccounts.forEach((acc) => {
+      if (acc.id && !uniqueSubMap.has(acc.id)) {
+        uniqueSubMap.set(acc.id, acc);
+      }
+    });
+    const uniqueSubAccounts = Array.from(uniqueSubMap.values());
+    setSubContractorNonLaborAccounts(uniqueSubAccounts);
 
-        // -------------------------
-        // Employee Non-Labor Accounts
-        // -------------------------
-        let employeeAccounts = Array.isArray(data.employeeNonLaborAccounts)
-          ? data.employeeNonLaborAccounts.map((account) => ({
-              id: account.accountId || account, // handle both object/string
-              name: account.acctName || account.accountId || String(account),
-            }))
-          : [];
-
-        // Deduplicate employee accounts
-        const uniqueEmployeeMap = new Map();
-        employeeAccounts.forEach((acc) => {
-          if (acc.id && !uniqueEmployeeMap.has(acc.id)) {
-            uniqueEmployeeMap.set(acc.id, acc);
-          }
-        });
-        const uniqueEmployeeAccounts = Array.from(uniqueEmployeeMap.values());
-        setEmployeeNonLaborAccounts(uniqueEmployeeAccounts);
-
-        // -------------------------
-        // SubContractor Non-Labor Accounts
-        // -------------------------
-        let subAccounts = Array.isArray(data.subContractorNonLaborAccounts)
-          ? data.subContractorNonLaborAccounts.map((account) => ({
-              id: account.accountId || account,
-              name: account.acctName || account.accountId || String(account),
-            }))
-          : [];
-
-        // Deduplicate subcontractor accounts
-        const uniqueSubMap = new Map();
-        subAccounts.forEach((acc) => {
-          if (acc.id && !uniqueSubMap.has(acc.id)) {
-            uniqueSubMap.set(acc.id, acc);
-          }
-        });
-        const uniqueSubAccounts = Array.from(uniqueSubMap.values());
-        setSubContractorNonLaborAccounts(uniqueSubAccounts);
-
-        // Other Direct Cost Non-Labor Accounts
+    // Other Direct Cost Non-Labor Accounts
     let otherAccounts = Array.isArray(data.otherDirectCostNonLaborAccounts)
       ? data.otherDirectCostNonLaborAccounts.map((account) => ({
           id: account.accountId || account,
@@ -858,24 +957,56 @@ const ProjectAmountsTable = ({
     const uniqueOtherAccounts = Array.from(uniqueOtherMap.values());
     setOtherDirectCostNonLaborAccounts(uniqueOtherAccounts);
 
-        let allAccountsWithNames = [
-          ...uniqueEmployeeAccounts,
-          ...uniqueSubAccounts,
-          ...uniqueOtherAccounts, 
-        ];
-        setAccountOptionsWithNames(allAccountsWithNames);
-      } catch (err) {
-        // console.error("Error fetching non-labor accounts:", err);
-        setEmployeeNonLaborAccounts([]);
-        setSubContractorNonLaborAccounts([]);
-        if (planType?.toUpperCase() !== "NBBUD") {
-          toast.error("Failed to fetch non-labor accounts", {
-            toastId: "non-labor-accounts-error",
-            autoClose: 3000,
-          });
-        }
-      }
-    };
+    // -------------------------
+    // NEW: PLC-SPECIFIC ACCOUNT LOGIC FOR NEW FORM
+    // Keep ALL existing logic intact
+    // -------------------------
+    let accounts = []; // For newEntry form datalist (just IDs)
+    
+    if (newEntry.idType === 'PLC') {
+      // COMBINE employee + subContractor accounts ONLY for PLC (like projecthoursdetail)
+      accounts = [...uniqueEmployeeAccounts.map(acc => ({ id: acc.id })), ...uniqueSubAccounts.map(acc => ({ id: acc.id }))];
+    } else if (newEntry.idType === 'Employee') {
+      accounts = uniqueEmployeeAccounts.map(acc => ({ id: acc.id }));
+    } else if (newEntry.idType === 'Vendor' || newEntry.idType === 'Vendor Employee') {
+      accounts = uniqueSubAccounts.map(acc => ({ id: acc.id }));
+    } else if (newEntry.idType === 'Other') {
+      accounts = uniqueOtherAccounts.map(acc => ({ id: acc.id }));
+    } else {
+      // Default: use all accounts (strip names for datalist)
+      accounts = [
+        ...uniqueEmployeeAccounts.map(acc => ({ id: acc.id })),
+        ...uniqueSubAccounts.map(acc => ({ id: acc.id })),
+        ...uniqueOtherAccounts.map(acc => ({ id: acc.id }))
+      ];
+    }
+
+    // Set accounts for new form datalist (without names - just IDs)
+    setNonLaborAccounts(accounts);
+    
+    // Keep allAccountsWithNames for existing row lookups (with names) - NO CHANGE TO EXISTING LOGIC
+    let allAccountsWithNames = [
+      ...uniqueEmployeeAccounts,
+      ...uniqueSubAccounts,
+      ...uniqueOtherAccounts, 
+    ];
+    setAccountOptionsWithNames(allAccountsWithNames);
+    
+  } catch (err) {
+    // console.error("Error fetching non-labor accounts:", err);
+    setEmployeeNonLaborAccounts([]);
+    setSubContractorNonLaborAccounts([]);
+    setNonLaborAccounts([]);  // ADD: Reset nonLaborAccounts on error
+    setOtherDirectCostNonLaborAccounts([]);
+    if (planType?.toUpperCase() !== "NBBUD") {
+      toast.error("Failed to fetch non-labor accounts", {
+        toastId: "non-labor-accounts-error",
+        autoClose: 3000,
+      });
+    }
+  }
+};
+
 
     if (formOpen) {
       fetchEmployees();
@@ -6264,7 +6395,10 @@ const fetchAllSuggestionsOptimizedForAmounts = async (processedEntries) => {
                             return (
                               <td
                                 key={`${uniqueRowKey}-${col.key}`}
-                                className="tbody-td min-w-[70px]"
+                                // className="tbody-td min-w-[70px]"
+                                className={`tbody-td min-w-[70px] ${
+    col.key === "name" ? "text-left" : ""
+  }`}
                               >
                                 {" "}
                                 {/* Changed p-2 to p-1.5, min-w-[80px] to min-w-[70px] */}
